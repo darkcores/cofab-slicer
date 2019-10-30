@@ -1,6 +1,11 @@
 #include "stlviewer.h"
 #include "orbitcameracontroller.h"
 
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QColorDialog>
+#include <QPushButton>
+
 #include <Qt3DCore/QAspectEngine>
 #include <Qt3DCore/QEntity>
 #include <Qt3DCore/QTransform>
@@ -10,13 +15,12 @@
 #include <Qt3DRender/QCameraLens>
 #include <Qt3DRender/QGeometry>
 #include <Qt3DRender/QMesh>
-#include <Qt3DRender/QPointLight>
 
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DInput/QInputAspect>
 
 #include <Qt3DExtras/QCylinderMesh>
-#include <Qt3DExtras/QDiffuseSpecularMaterial>
+#include <Qt3DExtras/QGoochMaterial>
 #include <Qt3DExtras/QFirstPersonCameraController>
 #include <Qt3DExtras/QForwardRenderer>
 #include <Qt3DExtras/QOrbitCameraController>
@@ -43,7 +47,7 @@ STLViewer::STLViewer(QWidget *parent) : QDockWidget(parent) {
     // For camera controls
     auto camController = new OrbitCameraController(scene);
     camController->setLinearSpeed(70.0f);
-    camController->setLookSpeed(260.0f);
+    camController->setLookSpeed(240.0f);
     camController->setCamera(camera);
 
     view->setRootEntity(scene);
@@ -51,15 +55,23 @@ STLViewer::STLViewer(QWidget *parent) : QDockWidget(parent) {
 
     auto w = createWindowContainer(view, this);
 
-    setWidget(w);
+	// Setup layout with items
+	auto layout = new QVBoxLayout();
+	layout->addWidget(w);
+	layout->addWidget(setupControlWidget());
+	
+	auto base = new QWidget(this);
+	base->setLayout(layout);
+    setWidget(base);
 }
 
 Qt3DCore::QEntity *STLViewer::createScene() {
     rootEntity = new Qt3DCore::QEntity;
 
-    material = new Qt3DExtras::QDiffuseSpecularMaterial(rootEntity);
+    material = new Qt3DExtras::QGoochMaterial(rootEntity);
     material->setDiffuse(QColor(125, 54, 254));
-    material->setAmbient(QColor(125, 54, 254));
+	material->setCool(QColor(130, 130, 130));
+	material->setWarm(QColor(50, 50, 50));
 
     // Torus
     stlEntity = new Qt3DCore::QEntity(rootEntity);
@@ -82,18 +94,6 @@ Qt3DCore::QEntity *STLViewer::createScene() {
     drawLine({0, 0, 0}, {10, 0, 0}, Qt::red);   // X
     drawLine({0, 0, 0}, {0, 10, 0}, Qt::green); // Y
     drawLine({0, 0, 0}, {0, 0, 10}, Qt::blue);  // Z
-
-    // Light
-    Qt3DCore::QEntity *lightEntity = new Qt3DCore::QEntity(rootEntity);
-    Qt3DRender::QPointLight *light = new Qt3DRender::QPointLight(lightEntity);
-    light->setColor("white");
-    light->setIntensity(1.0f);
-    lightEntity->addComponent(light);
-
-    Qt3DCore::QTransform *lightTransform =
-        new Qt3DCore::QTransform(lightEntity);
-    lightTransform->setTranslation(QVector3D(60, 0, 40.0f));
-    lightEntity->addComponent(lightTransform);
 
     return rootEntity;
 }
@@ -166,11 +166,33 @@ void STLViewer::drawLine(const QVector3D &start, const QVector3D &end,
     auto *line = new Qt3DRender::QGeometryRenderer(rootEntity);
     line->setGeometry(geometry);
     line->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
-    auto *material = new Qt3DExtras::QDiffuseSpecularMaterial(rootEntity);
-    material->setAmbient(color);
-
+    auto *material = new Qt3DExtras::QGoochMaterial(rootEntity);
+    material->setDiffuse(color);
+	material->setWarm(color);
+	material->setCool(color);
+	
     // entity
     auto *lineEntity = new Qt3DCore::QEntity(rootEntity);
     lineEntity->addComponent(line);
     lineEntity->addComponent(material);
+}
+
+QWidget *STLViewer::setupControlWidget() {
+	auto layout = new QHBoxLayout();
+	auto colorBtn = new QPushButton("Color", this);
+	connect(colorBtn, &QPushButton::clicked, this, &STLViewer::changeColor);
+	layout->addWidget(colorBtn);
+	layout->addWidget(new QPushButton("Reset view"));
+	layout->addWidget(new QPushButton("Top"));
+	layout->addWidget(new QPushButton("Front"));
+	layout->addWidget(new QPushButton("Side"));
+
+	auto w = new QWidget(this);
+	w->setLayout(layout);
+	return w;
+}
+
+void STLViewer::changeColor() {
+	auto newColor = QColorDialog::getColor(material->diffuse(), this);
+	material->setDiffuse(newColor);
 }
