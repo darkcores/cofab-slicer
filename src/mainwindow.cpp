@@ -24,10 +24,13 @@ void MainWindow::setupMenu() {
     // File menu & actions
     auto menu = menuBar()->addMenu(tr("&File"));
     openAct = menu->addAction(tr("&Open file"));
+	openAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_O));
     connect(openAct, &QAction::triggered, this, &MainWindow::openFile);
     exportAct = menu->addAction(tr("&Export"));
+	exportAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_E));
     connect(exportAct, &QAction::triggered, this, &MainWindow::exportGcode);
     quitAct = menu->addAction(tr("&Quit"));
+	quitAct->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     connect(quitAct, &QAction::triggered, this, &MainWindow::quit);
 
     // View menu & action (toggle visibility)

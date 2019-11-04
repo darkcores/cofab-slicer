@@ -1,10 +1,11 @@
 #include "stlviewer.h"
 #include "orbitcameracontroller.h"
 
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QColorDialog>
+#include <QHBoxLayout>
 #include <QPushButton>
+#include <QVBoxLayout>
+#include <QSizePolicy>
 
 #include <Qt3DCore/QAspectEngine>
 #include <Qt3DCore/QEntity>
@@ -20,9 +21,9 @@
 #include <Qt3DInput/QInputAspect>
 
 #include <Qt3DExtras/QCylinderMesh>
-#include <Qt3DExtras/QGoochMaterial>
 #include <Qt3DExtras/QFirstPersonCameraController>
 #include <Qt3DExtras/QForwardRenderer>
+#include <Qt3DExtras/QGoochMaterial>
 #include <Qt3DExtras/QOrbitCameraController>
 #include <Qt3DExtras/QTorusMesh>
 #include <Qt3DRender/QRenderAspect>
@@ -55,40 +56,53 @@ STLViewer::STLViewer(QWidget *parent) : QDockWidget(parent) {
 
     auto w = createWindowContainer(view, this);
 
-	// Setup layout with items
-	auto layout = new QVBoxLayout();
-	layout->addWidget(w);
-	layout->addWidget(setupControlWidget());
-	
-	auto base = new QWidget(this);
-	base->setLayout(layout);
+    // Setup layout with items
+    auto layout = new QVBoxLayout();
+	w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    layout->addWidget(w);
+    layout->addWidget(setupControlWidget());
+
+    auto base = new QWidget(this);
+    base->setLayout(layout);
     setWidget(base);
 }
 
 Qt3DCore::QEntity *STLViewer::createScene() {
     rootEntity = new Qt3DCore::QEntity;
 
+    stlEntity = new Qt3DCore::QEntity(rootEntity);
+    stlMesh = new Qt3DRender::QMesh;
+    stlMesh->setMeshName("StlFileMesh");
+
     material = new Qt3DExtras::QGoochMaterial(rootEntity);
     material->setDiffuse(QColor(125, 54, 254));
-	material->setCool(QColor(130, 130, 130));
-	material->setWarm(QColor(50, 50, 50));
+    material->setCool(QColor(130, 130, 130));
+    material->setWarm(QColor(50, 50, 50));
+
+    stlEntity->addComponent(stlMesh);
+    stlEntity->addComponent(material);
+
+    connect(stlMesh, &Qt3DRender::QMesh::statusChanged, this,
+            &STLViewer::geometryChange);
 
     // Torus
-    stlEntity = new Qt3DCore::QEntity(rootEntity);
-    Qt3DExtras::QTorusMesh *torusMesh = new Qt3DExtras::QTorusMesh;
-    torusMesh->setRadius(5);
-    torusMesh->setMinorRadius(1);
-    torusMesh->setRings(100);
-    torusMesh->setSlices(20);
+    /*
+stlEntity = new Qt3DCore::QEntity(rootEntity);
+Qt3DExtras::QTorusMesh *torusMesh = new Qt3DExtras::QTorusMesh;
+torusMesh->setRadius(5);
+torusMesh->setMinorRadius(1);
+torusMesh->setRings(100);
+torusMesh->setSlices(20);
 
-    Qt3DCore::QTransform *torusTransform = new Qt3DCore::QTransform;
-    torusTransform->setScale3D(QVector3D(1.5, 1, 0.5));
-    torusTransform->setRotation(
-        QQuaternion::fromAxisAndAngle(QVector3D(1, 0, 0), 45.0f));
+Qt3DCore::QTransform *torusTransform = new Qt3DCore::QTransform;
+torusTransform->setScale3D(QVector3D(1.5, 1, 0.5));
+torusTransform->setRotation(
+    QQuaternion::fromAxisAndAngle(QVector3D(1, 0, 0), 45.0f));
 
-    stlEntity->addComponent(torusMesh);
-    stlEntity->addComponent(torusTransform);
-    stlEntity->addComponent(material);
+stlEntity->addComponent(torusMesh);
+stlEntity->addComponent(torusTransform);
+stlEntity->addComponent(material);
+    */
 
     // Setup axes
     drawLine({0, 0, 0}, {10, 0, 0}, Qt::red);   // X
@@ -99,16 +113,8 @@ Qt3DCore::QEntity *STLViewer::createScene() {
 }
 
 void STLViewer::loadStl(QUrl file) {
-    // remove old entity
-    delete stlEntity;
-
-    stlEntity = new Qt3DCore::QEntity(rootEntity);
-
-    Qt3DRender::QMesh *stlMesh = new Qt3DRender::QMesh;
-    stlMesh->setMeshName("StlFileMesh");
     stlMesh->setSource(file);
-    stlEntity->addComponent(stlMesh);
-    stlEntity->addComponent(material);
+    // qDebug() << stlMesh->geometry();
 }
 
 void STLViewer::drawLine(const QVector3D &start, const QVector3D &end,
@@ -168,9 +174,9 @@ void STLViewer::drawLine(const QVector3D &start, const QVector3D &end,
     line->setPrimitiveType(Qt3DRender::QGeometryRenderer::Lines);
     auto *material = new Qt3DExtras::QGoochMaterial(rootEntity);
     material->setDiffuse(color);
-	material->setWarm(color);
-	material->setCool(color);
-	
+    material->setWarm(color);
+    material->setCool(color);
+
     // entity
     auto *lineEntity = new Qt3DCore::QEntity(rootEntity);
     lineEntity->addComponent(line);
@@ -178,21 +184,21 @@ void STLViewer::drawLine(const QVector3D &start, const QVector3D &end,
 }
 
 QWidget *STLViewer::setupControlWidget() {
-	auto layout = new QHBoxLayout();
-	auto colorBtn = new QPushButton("Color", this);
-	connect(colorBtn, &QPushButton::clicked, this, &STLViewer::changeColor);
-	layout->addWidget(colorBtn);
-	layout->addWidget(new QPushButton("Reset view"));
-	layout->addWidget(new QPushButton("Top"));
-	layout->addWidget(new QPushButton("Front"));
-	layout->addWidget(new QPushButton("Side"));
+    auto layout = new QHBoxLayout();
+    auto colorBtn = new QPushButton("Color", this);
+    connect(colorBtn, &QPushButton::clicked, this, &STLViewer::changeColor);
+    layout->addWidget(colorBtn);
+    layout->addWidget(new QPushButton("Reset view"));
+    layout->addWidget(new QPushButton("Top"));
+    layout->addWidget(new QPushButton("Front"));
+    layout->addWidget(new QPushButton("Side"));
 
-	auto w = new QWidget(this);
-	w->setLayout(layout);
-	return w;
+    auto w = new QWidget(this);
+    w->setLayout(layout);
+    return w;
 }
 
 void STLViewer::changeColor() {
-	auto newColor = QColorDialog::getColor(material->diffuse(), this);
-	material->setDiffuse(newColor);
+    auto newColor = QColorDialog::getColor(material->diffuse(), this);
+    material->setDiffuse(newColor);
 }
