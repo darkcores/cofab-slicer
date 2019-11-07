@@ -7,6 +7,7 @@ class SlicerOptions;
 class STLViewer;
 class GCodeViewer;
 class QAction;
+class Model3D;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -21,6 +22,7 @@ class MainWindow : public QMainWindow {
 	GCodeViewer *gcodeViewer;
 	QAction *openAct, *exportAct, *quitAct;
 	QAction *optionViewAct, *stlViewAct, *gcodeViewAct;
+	Model3D *model;
 
     void setupMenu();
 	void setupDocks();
