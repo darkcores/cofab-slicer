@@ -64,6 +64,8 @@ void MainWindow::openFile() {
 	if (model)
 		delete model;
 	model = new Model3D(file.path().toStdString());
+	auto slice = model->getSlice();
+	gcodeViewer->setSlice(slice);
 }
 
 void MainWindow::exportGcode() {}
