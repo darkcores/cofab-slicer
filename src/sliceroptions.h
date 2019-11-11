@@ -11,6 +11,11 @@ class SlicerOptions : public QDockWidget {
   public:
     explicit SlicerOptions(QWidget *parent = nullptr);
 
+  private:
+    QWidget *objectSettings();
+    QWidget *slicerSettings();
+    QWidget *printerSettings();
+
   signals:
 
   public slots:
