@@ -11,13 +11,13 @@ class GCodeViewer : public QDockWidget {
   public:
     explicit GCodeViewer(QWidget *parent = nullptr);
 
-	void setSlice(const std::vector<Model3D::Line> &slice);
+	void setSlice(const std::vector<QLineF> &slice);
 
   protected:
     void paintEvent(QPaintEvent *event);
 
 private:
-	std::vector<Model3D::Line> lines;
+	std::vector<QLineF> lines;
 
   signals:
 

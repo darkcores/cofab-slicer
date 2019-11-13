@@ -15,11 +15,11 @@ void GCodeViewer::paintEvent(QPaintEvent *event) {
 
     // painter.drawRect(0, 0, 100, 100);
 	for (auto &l : lines) {
-		painter.drawLine(l.x1, l.y1, l.x2, l.y2);
+		painter.drawLine(l);
 	}
 }
 
-void GCodeViewer::setSlice(const std::vector<Model3D::Line> &slice) {
+void GCodeViewer::setSlice(const std::vector<QLineF> &slice) {
     lines.clear();
     // std::copy(slice.begin(), slice.end(), lines);
 	lines = std::move(slice);

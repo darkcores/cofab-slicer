@@ -33,38 +33,34 @@ Model3D::Model3D(const std::string &filename) {
 
     for (std::size_t i = 0; i < mesh->mNumVertices; i++) {
         auto ov = mesh->mVertices[i];
-        Vertex v = {.x = ov.x, .y = ov.y, .z = ov.z};
+        QVector3D v(ov.x, ov.y, ov.z);
         vertices.push_back(v);
     }
 
     for (std::size_t i = 0; i < mesh->mNumFaces; i++) {
         auto face = mesh->mFaces[i];
         assert(face.mNumIndices == 3);
-        Face f = {.x = face.mIndices[0],
-                  .y = face.mIndices[1],
-                  .z = face.mIndices[2]};
+		std::array<std::size_t, 3> f = {face.mIndices[0], face.mIndices[1],
+                            face.mIndices[2]};
         faces.push_back(f);
     }
-
-    // TODO remove test slice
-    // auto x = getSlice();
 }
 
-std::vector<Model3D::Line> Model3D::getSlice() const {
-    std::vector<Line> points;
+std::vector<QLineF> Model3D::getSlice() const {
+    std::vector<QLineF> points;
     auto t1 = std::chrono::high_resolution_clock::now();
 
     for (auto &f : faces) {
         if (min_z(f) <= currentLayer && max_z(f) >= currentLayer) {
             // Calculate line
-            const auto face = getFace(f);
+            // const auto face = getFace(f);
 
             // Get the number of faces above / under line
-            std::vector<Vertex> above, on, under;
-            for (auto vertex : face) {
-                if (vertex.z < currentLayer) {
+            std::vector<std::size_t> above, on, under;
+            for (auto vertex : f) {
+                if (vertices[vertex].z() < currentLayer) {
                     under.push_back(vertex);
-                } else if (vertex.z == currentLayer) {
+                } else if (vertices[vertex].z() == currentLayer) {
                     on.push_back(vertex);
                 } else {
                     above.push_back(vertex);
@@ -82,28 +78,31 @@ std::vector<Model3D::Line> Model3D::getSlice() const {
                 continue;
             } else if (above.size() == 1 && under.size() == 2) {
                 // calculate 2 points
-                Vertex v1 = getZPoint(above[0], under[0]);
-                Vertex v2 = getZPoint(above[0], under[1]);
-                Line l = {v1.x, v1.y, v2.x, v2.y};
+                QPointF v1 = getZPoint(above[0], under[0]);
+                QPointF v2 = getZPoint(above[0], under[1]);
+				QLineF l(v1, v2);
                 points.push_back(l);
             } else if (above.size() == 2 && under.size() == 1) {
                 // calculate 2 points
-                Vertex v1 = getZPoint(above[0], under[0]);
-                Vertex v2 = getZPoint(above[1], under[0]);
-                Line l = {v1.x, v1.y, v2.x, v2.y};
+                QPointF v1 = getZPoint(above[0], under[0]);
+                QPointF v2 = getZPoint(above[1], under[0]);
+				QLineF l(v1, v2);
                 points.push_back(l);
             } else if (on.size() == 1) {
                 if (above.size() == 2 || under.size() == 2) {
                     continue;
                 } else {
                     // Calculate 1 point
-                    Vertex v = getZPoint(above[0], under[0]);
-                    Line l = {on[0].x, on[0].y, v.x, v.y};
+                    QPointF v1 = getZPoint(above[0], under[0]);
+					QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
+                    QLineF l(v1, v2);
                     points.push_back(l);
                 }
             } else if (on.size() == 2) {
                 // Keep 2 points
-                Line l = {on[0].x, on[0].y, on[1].x, on[1].y};
+				QPointF v1(vertices[on[0]].x(), vertices[on[0]].y());
+				QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
+				QLineF l(v1, v2);
                 points.push_back(l);
             }
         }
@@ -116,10 +115,13 @@ std::vector<Model3D::Line> Model3D::getSlice() const {
     std::cout << points.size() << " lines" << std::endl;
 
     for (auto &l : points) {
-		l *= 10;
-		l.translate(300, 100);
-        /* std::cout << "(" << l.x1 << "," << l.y1 << "),(" << l.x2 << "," << l.y2
-		   << ")" << std::endl; */
+        // l *= 10;
+		l.setP1(l.p1() * 10);
+		l.setP2(l.p2() * 10);
+        l.translate(300, 100);
+        /* std::cout << "(" << l.x1 << "," << l.y1 << "),(" << l.x2 << "," <<
+           l.y2
+                   << ")" << std::endl; */
     }
 
     return points;

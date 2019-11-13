@@ -3,78 +3,56 @@
 
 #include <algorithm>
 #include <string>
+#include <array>
 #include <vector>
+
+#include <QLineF>
+#include <QPointF>
+#include <QPolygon>
+#include <QVector3D>
 
 /**
  * Handle loading 3D models and calculating 2D intersections.
  */
 class Model3D {
-    struct Vertex {
-        double x, y, z;
-    };
-
-  public:
-    struct Line {
-        double x1, y1, x2, y2;
-
-		Line &operator*=(const double scale) {
-			x1 *= scale;
-			x2 *= scale;
-			y1 *= scale;
-			y2 *= scale;
-			return *this;
-		}
-
-		void translate(const int x, const int y) {
-			x1 += x;
-			x2 += x;
-			y1 += y;
-			y2 += y;
-		}
-    };
-
-    struct Face {
-        std::size_t x, y, z;
-    };
-
   public:
     Model3D(const std::string &filename);
 
-    std::vector<Line> getSlice() const;
+    std::vector<QLineF> getSlice() const;
 
   private:
-    std::vector<Vertex> vertices;
-    std::vector<Face> faces;
+    std::vector<QVector3D> vertices;
+    std::vector<std::array<std::size_t, 3>> faces;
 
-    double layerHeight, currentLayer;
+    float layerHeight, currentLayer;
 
-    inline double max_z(const Face &f) const {
-        double z = vertices[f.x].z;
-        z = std::max(z, vertices[f.y].z);
-        z = std::max(z, vertices[f.z].z);
+    inline float max_z(const std::array<std::size_t, 3> &f) const {
+        float z = vertices[f[0]].z();
+        z = std::max(z, vertices[f[1]].z());
+        z = std::max(z, vertices[f[2]].z());
         return z;
     }
 
-    inline double min_z(const Face &f) const {
-        double z = vertices[f.x].z;
-        z = std::min(z, vertices[f.y].z);
-        z = std::min(z, vertices[f.z].z);
+    inline float min_z(const std::array<std::size_t, 3> &f) const {
+        float z = vertices[f[0]].z();
+        z = std::min(z, vertices[f[1]].z());
+        z = std::min(z, vertices[f[2]].z());
         return z;
     }
 
-    inline std::vector<Vertex> getFace(const Face f) const {
-        std::vector<Vertex> face;
-        face.push_back(vertices[f.x]);
-        face.push_back(vertices[f.y]);
-        face.push_back(vertices[f.z]);
-        return face;
-    }
-
-    inline Vertex getZPoint(const Vertex p1, const Vertex p2) const {
-        Vertex v;
-        v.x = p1.x + ((currentLayer - p1.z) * (p2.x - p1.x)) / (p2.z - p1.z);
-        v.y = p1.y + ((currentLayer - p1.z) * (p2.y - p1.y)) / (p2.z - p1.z);
-        v.z = currentLayer;
+    /**
+     * Calculate point on current Z.
+     * @param p1 first point index.
+     * @param p2 second point index.
+     */
+    inline QPointF getZPoint(const std::size_t p1, const std::size_t p2) const {
+        QPointF v;
+        v.setX(vertices[p1].x() + ((currentLayer - vertices[p1].z()) *
+                                   (vertices[p2].x() - vertices[p1].x())) /
+                                      (vertices[p2].z() - vertices[p1].z()));
+        v.setY(vertices[p1].y() + ((currentLayer - vertices[p1].z()) *
+                                   (vertices[p2].y() - vertices[p1].y())) /
+                                      (vertices[p2].z() - vertices[p1].z()));
         return v;
     }
 };
