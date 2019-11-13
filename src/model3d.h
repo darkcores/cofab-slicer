@@ -8,7 +8,7 @@
 
 #include <QLineF>
 #include <QPointF>
-#include <QPolygon>
+#include <QPolygonF>
 #include <QVector3D>
 
 /**
@@ -18,7 +18,7 @@ class Model3D {
   public:
     Model3D(const std::string &filename);
 
-    std::vector<QLineF> getSlice() const;
+    std::vector<QPolygonF> getSlice() const;
 
   private:
     std::vector<QVector3D> vertices;

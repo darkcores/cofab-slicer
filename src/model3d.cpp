@@ -40,14 +40,14 @@ Model3D::Model3D(const std::string &filename) {
     for (std::size_t i = 0; i < mesh->mNumFaces; i++) {
         auto face = mesh->mFaces[i];
         assert(face.mNumIndices == 3);
-		std::array<std::size_t, 3> f = {face.mIndices[0], face.mIndices[1],
-                            face.mIndices[2]};
+        std::array<std::size_t, 3> f = {face.mIndices[0], face.mIndices[1],
+                                        face.mIndices[2]};
         faces.push_back(f);
     }
 }
 
-std::vector<QLineF> Model3D::getSlice() const {
-    std::vector<QLineF> points;
+std::vector<QPolygonF> Model3D::getSlice() const {
+    std::vector<QLineF> lines;
     auto t1 = std::chrono::high_resolution_clock::now();
 
     for (auto &f : faces) {
@@ -77,33 +77,33 @@ std::vector<QLineF> Model3D::getSlice() const {
                 // Not intersecting
                 continue;
             } else if (above.size() == 1 && under.size() == 2) {
-                // calculate 2 points
+                // calculate 2 lines
                 QPointF v1 = getZPoint(above[0], under[0]);
                 QPointF v2 = getZPoint(above[0], under[1]);
-				QLineF l(v1, v2);
-                points.push_back(l);
+                QLineF l(v1, v2);
+                lines.push_back(l);
             } else if (above.size() == 2 && under.size() == 1) {
-                // calculate 2 points
+                // calculate 2 lines
                 QPointF v1 = getZPoint(above[0], under[0]);
                 QPointF v2 = getZPoint(above[1], under[0]);
-				QLineF l(v1, v2);
-                points.push_back(l);
+                QLineF l(v1, v2);
+                lines.push_back(l);
             } else if (on.size() == 1) {
                 if (above.size() == 2 || under.size() == 2) {
                     continue;
                 } else {
                     // Calculate 1 point
                     QPointF v1 = getZPoint(above[0], under[0]);
-					QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
+                    QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
                     QLineF l(v1, v2);
-                    points.push_back(l);
+                    lines.push_back(l);
                 }
             } else if (on.size() == 2) {
-                // Keep 2 points
-				QPointF v1(vertices[on[0]].x(), vertices[on[0]].y());
-				QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
-				QLineF l(v1, v2);
-                points.push_back(l);
+                // Keep 2 lines
+                QPointF v1(vertices[on[0]].x(), vertices[on[0]].y());
+                QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
+                QLineF l(v1, v2);
+                lines.push_back(l);
             }
         }
     }
@@ -112,17 +112,64 @@ std::vector<QLineF> Model3D::getSlice() const {
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "Slice in: " << duration << "ms " << std::endl;
-    std::cout << points.size() << " lines" << std::endl;
+    std::cout << lines.size() << " lines" << std::endl;
 
-    for (auto &l : points) {
+    for (auto &l : lines) {
         // l *= 10;
-		l.setP1(l.p1() * 10);
-		l.setP2(l.p2() * 10);
+        l.setP1(l.p1() * 10);
+        l.setP2(l.p2() * 10);
         l.translate(300, 100);
         /* std::cout << "(" << l.x1 << "," << l.y1 << "),(" << l.x2 << "," <<
            l.y2
                    << ")" << std::endl; */
     }
 
-    return points;
+    std::vector<QPolygonF> polygons;
+    std::vector<bool> used(lines.size());
+
+    auto done = [&used]() -> bool {
+        for (auto u : used) {
+            if (!u)
+                return false;
+        }
+        return true;
+    };
+
+    auto findNext = [&used, &lines](const QPointF value) -> QPointF {
+        for (std::size_t i = 0; i < lines.size(); i++) {
+            if (lines[i].p1() == value && !used[i]) {
+                used[i] = true;
+                return lines[i].p2();
+            }
+            if (lines[i].p2() == value && !used[i]) {
+                used[i] = true;
+                return lines[i].p1();
+            }
+        }
+        return QPointF(-9999, -9999);
+    };
+
+    auto getFirst = [&used, &lines]() -> QLineF {
+        for (std::size_t i = 0; i < used.size(); i++) {
+            if (!used[i]) {
+                used[i] = true;
+                return lines[i];
+            }
+        }
+		return QLine(-9999, -9999, -9999, -9999);
+    };
+
+    while (!done()) {
+		QPolygonF poly;
+		auto start = getFirst();
+		poly << start.p1() << start.p2();
+		QPointF next = findNext(start.p2());
+		while (next != QPointF(-9999, -9999)) {
+			poly << next;
+			next = findNext(next);
+		}
+		polygons.push_back(poly);
+    }
+
+    return polygons;
 }
