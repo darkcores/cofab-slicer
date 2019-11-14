@@ -108,11 +108,7 @@ std::vector<QPolygonF> Model3D::getSlice() const {
         }
     }
 
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout << "Slice in: " << duration << "ms " << std::endl;
-    std::cout << lines.size() << " lines" << std::endl;
+	std::cout << lines.size() << " lines" << std::endl;
 
     for (auto &l : lines) {
         // l *= 10;
@@ -135,13 +131,17 @@ std::vector<QPolygonF> Model3D::getSlice() const {
         return true;
     };
 
-    auto findNext = [&used, &lines](const QPointF value) -> QPointF {
-        for (std::size_t i = 0; i < lines.size(); i++) {
-            if (lines[i].p1() == value && !used[i]) {
+	std::size_t firstpoint = 0;
+
+    auto findNext = [&used, &lines, &firstpoint](const QPointF value) -> QPointF {
+        for (std::size_t i = firstpoint; i < lines.size(); i++) {
+			if (used[i])
+				continue;
+            if (lines[i].p1() == value) {
                 used[i] = true;
                 return lines[i].p2();
             }
-            if (lines[i].p2() == value && !used[i]) {
+            if (lines[i].p2() == value) {
                 used[i] = true;
                 return lines[i].p1();
             }
@@ -149,9 +149,10 @@ std::vector<QPolygonF> Model3D::getSlice() const {
         return QPointF(-9999, -9999);
     };
 
-    auto getFirst = [&used, &lines]() -> QLineF {
-        for (std::size_t i = 0; i < used.size(); i++) {
+    auto getFirst = [&used, &lines, &firstpoint]() -> QLineF {
+        for (std::size_t i = firstpoint; i < used.size(); i++) {
             if (!used[i]) {
+				firstpoint = i + 1;
                 used[i] = true;
                 return lines[i];
             }
@@ -170,6 +171,13 @@ std::vector<QPolygonF> Model3D::getSlice() const {
 		}
 		polygons.push_back(poly);
     }
+	
+	std::cout << polygons.size() << " Polygons" << std::endl;
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << "Slice in: " << duration << "ms " << std::endl;
 
     return polygons;
 }
