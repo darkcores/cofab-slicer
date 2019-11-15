@@ -4,7 +4,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
 
-QMAKE_CXXFLAGS_RELEASE = "-march=native -O3 -msse -msse2 -msse3 -mssse3"
+QMAKE_CXXFLAGS_RELEASE = "-march=native -O2 -msse -msse2 -msse3 -mssse3"
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings

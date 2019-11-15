@@ -19,7 +19,7 @@ SlicerOptions::SlicerOptions(QWidget *parent) : QDockWidget(parent) {
 	setWidget(toolbox);
 }
 
-QWidget *SlicerOptions::objectSettings() {
+QWidget *SlicerOptions::slicerSettings() {
     auto w = new QWidget(this);
     auto layout = new QFormLayout(w);
 
@@ -32,17 +32,17 @@ QWidget *SlicerOptions::objectSettings() {
 	return w;
 }
 
-QWidget *SlicerOptions::slicerSettings() {
+QWidget *SlicerOptions::objectSettings() {
     auto w = new QWidget(this);
     auto layout = new QFormLayout(w);
 
     layout->addRow(tr("X offset"), new QLineEdit(this));
     layout->addRow(tr("Y offset"), new QLineEdit(this));
-    layout->addRow(tr("Z offset"), new QLineEdit(this));
+	// Auto calculate
+    // layout->addRow(tr("Z offset"), new QLineEdit(this));
     layout->addRow(tr("X scale"), new QLineEdit(this));
     layout->addRow(tr("Y scale"), new QLineEdit(this));
     layout->addRow(tr("Z scale"), new QLineEdit(this));
-    layout->addRow(tr("Show printer bounds"), new QCheckBox(this));
 
 	return w;
 }
@@ -55,6 +55,7 @@ QWidget *SlicerOptions::printerSettings() {
     layout->addRow(tr("Bed Y"), new QLineEdit(this));
     layout->addRow(tr("Z height"), new QLineEdit(this));
     layout->addRow(tr("Nozzle width"), new QLineEdit(this));
+    layout->addRow(tr("Show printer bounds"), new QCheckBox(this));
 
 	return w;
 }

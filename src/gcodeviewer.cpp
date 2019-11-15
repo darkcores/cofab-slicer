@@ -14,9 +14,14 @@ void GCodeViewer::paintEvent(QPaintEvent *event) {
 
     // painter.drawRect(0, 0, 100, 100);
 	for (auto &l : lines) {
-		QPen pen(QColor::fromRgb(QRandomGenerator::global()->generate()), 2, Qt::SolidLine);
+		auto color = QColor::fromRgb(QRandomGenerator::global()->generate());
+		QPen pen(color, 2, Qt::SolidLine);
 		painter.setPen(pen);
 		painter.drawPolygon(l);
+		pen.setWidth(5);
+		painter.setPen(pen);
+		painter.drawPoint(l[0]);
+		painter.drawPoint(l[l.size() - 1]);
 	}
 }
 

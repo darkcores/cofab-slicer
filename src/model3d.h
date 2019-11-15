@@ -24,7 +24,7 @@ class Model3D {
     std::vector<QVector3D> vertices;
     std::vector<std::array<std::size_t, 3>> faces;
 
-    float layerHeight, currentLayer;
+    qreal layerHeight, currentLayer;
 
     inline float max_z(const std::array<std::size_t, 3> &f) const {
         float z = vertices[f[0]].z();
