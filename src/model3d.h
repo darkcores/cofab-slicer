@@ -6,9 +6,10 @@
 #include <array>
 #include <vector>
 
-#include <QLineF>
 #include <QPointF>
-#include <QPolygonF>
+#include <QPoint>
+#include <QLine>
+#include <QPolygon>
 #include <QVector3D>
 
 /**
@@ -18,9 +19,10 @@ class Model3D {
   public:
     Model3D(const std::string &filename);
 
-    std::vector<QPolygonF> getSlice() const;
+    std::vector<QPolygon> getSlice() const;
 
   private:
+	const int INT_SCALE = 1000000;
     std::vector<QVector3D> vertices;
     std::vector<std::array<std::size_t, 3>> faces;
 
@@ -45,7 +47,7 @@ class Model3D {
      * @param p1 first point index.
      * @param p2 second point index.
      */
-    inline QPointF getZPoint(const std::size_t p1, const std::size_t p2) const {
+    inline QPoint getZPoint(const std::size_t p1, const std::size_t p2) const {
         QPointF v;
         v.setX(vertices[p1].x() + ((currentLayer - vertices[p1].z()) *
                                    (vertices[p2].x() - vertices[p1].x())) /
@@ -53,7 +55,8 @@ class Model3D {
         v.setY(vertices[p1].y() + ((currentLayer - vertices[p1].z()) *
                                    (vertices[p2].y() - vertices[p1].y())) /
                                       (vertices[p2].z() - vertices[p1].z()));
-        return v;
+		v *= INT_SCALE;
+		return v.toPoint();
     }
 };
 

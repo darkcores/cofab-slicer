@@ -25,7 +25,7 @@ void GCodeViewer::paintEvent(QPaintEvent *event) {
 	}
 }
 
-void GCodeViewer::setSlice(const std::vector<QPolygonF> &slice) {
+void GCodeViewer::setSlice(const std::vector<QPolygon> &slice) {
     lines.clear();
     // std::copy(slice.begin(), slice.end(), lines);
 	lines = std::move(slice);

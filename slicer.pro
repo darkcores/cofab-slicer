@@ -1,6 +1,6 @@
-QT       += core gui 3dcore 3drender 3dinput 3dextras 3dlogic 3danimation
+QT       += core widgets 3dcore 3drender 3dinput 3dextras 3dlogic 3danimation
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+!versionAtLeast(QT_VERSION, 5.10.0):error("Use at least Qt version 5.10.0") 
 
 CONFIG += c++11
 

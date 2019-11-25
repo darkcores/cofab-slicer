@@ -9,9 +9,11 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 
+#include <QPoint>
+
 Model3D::Model3D(const std::string &filename) {
     layerHeight = 0.2;
-    currentLayer = 40.1;
+    currentLayer = 0.1;
 
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(
@@ -46,8 +48,8 @@ Model3D::Model3D(const std::string &filename) {
     }
 }
 
-std::vector<QPolygonF> Model3D::getSlice() const {
-    std::vector<QLineF> lines;
+std::vector<QPolygon> Model3D::getSlice() const {
+    std::vector<QLine> lines;
     auto t1 = std::chrono::high_resolution_clock::now();
 
     for (auto &f : faces) {
@@ -78,30 +80,31 @@ std::vector<QPolygonF> Model3D::getSlice() const {
                 continue;
             } else if (above.size() == 1 && under.size() == 2) {
                 // calculate 2 lines
-                QPointF v1 = getZPoint(above[0], under[0]);
-                QPointF v2 = getZPoint(above[0], under[1]);
+                QPoint v1 = getZPoint(above[0], under[0]);
+                QPoint v2 = getZPoint(above[0], under[1]);
 				if (v1 == v2)
 					continue;
-                QLineF l(v1, v2);
+                QLine l(v1, v2);
                 lines.push_back(l);
             } else if (above.size() == 2 && under.size() == 1) {
                 // calculate 2 lines
-                QPointF v1 = getZPoint(above[0], under[0]);
-                QPointF v2 = getZPoint(above[1], under[0]);
+                QPoint v1 = getZPoint(above[0], under[0]);
+                QPoint v2 = getZPoint(above[1], under[0]);
 				if (v1 == v2)
 					continue;
-                QLineF l(v1, v2);
+                QLine l(v1, v2);
                 lines.push_back(l);
             } else if (on.size() == 1) {
                 if (above.size() == 2 || under.size() == 2) {
                     continue;
                 } else {
                     // Calculate 1 point
-                    QPointF v1 = getZPoint(above[0], under[0]);
-                    QPointF v2(vertices[on[0]].x(), vertices[on[0]].y());
+                    QPoint v1 = getZPoint(above[0], under[0]);
+                    QPointF v2_tmp(vertices[on[0]].x(), vertices[on[0]].y());
+					QPoint v2 = (v2_tmp * INT_SCALE).toPoint();
 					if (v1 == v2)
 						continue;
-                    QLineF l(v1, v2);
+                    QLine l(v1, v2);
                     lines.push_back(l);
                 }
             } else if (on.size() == 2) {
@@ -112,11 +115,13 @@ std::vector<QPolygonF> Model3D::getSlice() const {
                 }
                 std::cout << "2 on a line" << std::endl;
                 // Keep 2 lines
-                QPointF v1(vertices[on[0]].x(), vertices[on[0]].y());
-                QPointF v2(vertices[on[1]].x(), vertices[on[1]].y());
+                QPointF v1_tmp(vertices[on[0]].x(), vertices[on[0]].y());
+                QPointF v2_tmp(vertices[on[1]].x(), vertices[on[1]].y());
+				QPoint v1 = (v1_tmp * INT_SCALE).toPoint();
+				QPoint v2 = (v2_tmp * INT_SCALE).toPoint();
 				if (v1 == v2)
 					continue;
-                QLineF l(v1, v2);
+                QLine l(v1, v2);
 				bool found = false;
 				for (auto &x : lines) {
 					if (x == l) {
@@ -136,7 +141,7 @@ std::vector<QPolygonF> Model3D::getSlice() const {
 
     std::cout << lines.size() << " lines" << std::endl;
 
-    std::vector<QPolygonF> polygons;
+    std::vector<QPolygon> polygons;
     std::vector<bool> used(lines.size());
 
     auto done = [&used]() -> bool {
@@ -150,7 +155,7 @@ std::vector<QPolygonF> Model3D::getSlice() const {
     std::size_t firstpoint = 0;
 
     auto findNext = [&used, &lines,
-                     &firstpoint](const QPointF value) -> QPointF {
+                     &firstpoint](const QPoint value) -> QPoint {
         for (std::size_t i = firstpoint; i < lines.size(); i++) {
             if (used[i])
                 continue;
@@ -163,10 +168,10 @@ std::vector<QPolygonF> Model3D::getSlice() const {
                 return lines[i].p1();
             }
         }
-        return QPointF(-9999, -9999);
+        return QPoint(-9999, -9999);
     };
 
-    auto getFirst = [&used, &lines, &firstpoint]() -> QLineF {
+    auto getFirst = [&used, &lines, &firstpoint]() -> QLine {
         for (std::size_t i = firstpoint; i < used.size(); i++) {
             if (!used[i]) {
                 firstpoint = i + 1;
@@ -178,11 +183,11 @@ std::vector<QPolygonF> Model3D::getSlice() const {
     };
 
     while (!done()) {
-        QPolygonF poly;
+        QPolygon poly;
         auto start = getFirst();
         poly << start.p1() << start.p2();
-        QPointF next = findNext(start.p2());
-        while (next != QPointF(-9999, -9999)) {
+        QPoint next = findNext(start.p2());
+        while (next != QPoint(-9999, -9999)) {
             poly << next;
             next = findNext(next);
         }
@@ -197,8 +202,8 @@ std::vector<QPolygonF> Model3D::getSlice() const {
 			}
         }
         for (auto &pt : p) {
-            pt *= 15;
-            pt += QPointF(400, 200);
+            pt /= 100000;
+            pt += QPoint(400, 200);
         }
     }
 
