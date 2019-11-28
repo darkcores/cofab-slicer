@@ -2,13 +2,17 @@
 
 STL slicer
 
+## Dependencies
+
+This project uses `Qt>=5.10`, `assimp` and `clipper`.
+
 ## Building
 
 This project uses the qmake build system. One way to build this
 project is shown below.
 
 ```
-qmake
+qmake slicer.pro
 make -j4
 ```
 

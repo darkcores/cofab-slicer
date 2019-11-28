@@ -20,11 +20,13 @@ class Model3D {
     Model3D(const std::string &filename);
 
     std::vector<QPolygon> getSlice() const;
+	const int INT_SCALE = 1000000;
 
   private:
-	const int INT_SCALE = 1000000;
     std::vector<QVector3D> vertices;
     std::vector<std::array<std::size_t, 3>> faces;
+	std::vector<QLine> getLines() const;
+	QPolygon previous_layer;
 
     qreal layerHeight, currentLayer;
 

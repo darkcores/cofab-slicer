@@ -4,6 +4,7 @@
 #include "stlviewer.h"
 
 #include "model3d.h"
+#include "sliceprocessor.h"
 
 #include <QAction>
 #include <QApplication>
@@ -65,7 +66,10 @@ void MainWindow::openFile() {
 		delete model;
 	model = new Model3D(file.path().toStdString());
 	auto slice = model->getSlice();
-	gcodeViewer->setSlice(slice);
+	// gcodeViewer->setSlice(slice);
+	SliceProcessor sp;
+	auto clipped = sp.process(slice);
+	gcodeViewer->setSlice(clipped);
 }
 
 void MainWindow::exportGcode() {}
