@@ -23,13 +23,17 @@ SliceProcessor::process(const std::vector<QPolygon> &paths) const {
 	// TODO speedups
 
 	ClipperLib::Paths processed;
+	ClipperLib::CleanPolygons(clippedpaths);
 	auto edge1 = getEdges(clippedpaths, true);
+	ClipperLib::CleanPolygons(edge1);
 	auto edge2 = getEdges(edge1, false);
+	ClipperLib::CleanPolygons(edge2);
 	auto edge3 = getEdges(edge2, false);
 	processed.insert(processed.end(), edge1.begin(), edge1.end());
 	processed.insert(processed.end(), edge2.begin(), edge2.end());
 	processed.insert(processed.end(), edge3.begin(), edge3.end());
 
+	ClipperLib::CleanPolygons(edge3);
 	auto infill = getInfill(edge3);
 	processed.insert(processed.end(), infill.begin(), infill.end());
 
