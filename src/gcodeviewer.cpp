@@ -33,7 +33,7 @@ void GCodeViewer::setSlice(const std::vector<QPolygon> &slice) {
     for (auto &p : lines) {
         for (auto &pt : p) {
             pt /= 100000;
-            pt += QPoint(400, 200);
+            // pt += QPoint(400, 200);
         }
     }
 }

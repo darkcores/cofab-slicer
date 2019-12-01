@@ -65,11 +65,12 @@ void MainWindow::openFile() {
 	if (model)
 		delete model;
 	model = new Model3D(file.path().toStdString());
-	auto slice = model->getSlice();
+	auto slices = model->getSlices();
+	auto bounds = model->getBounds();
 	// gcodeViewer->setSlice(slice);
-	SliceProcessor sp;
-	auto clipped = sp.process(slice);
-	gcodeViewer->setSlice(clipped);
+	SliceProcessor sp(bounds);
+	auto clipped = sp.process(slices);
+	gcodeViewer->setSlice(clipped[0]);
 }
 
 void MainWindow::exportGcode() {}

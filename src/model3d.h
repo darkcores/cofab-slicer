@@ -2,13 +2,13 @@
 #define MODEL3D_H
 
 #include <algorithm>
-#include <string>
 #include <array>
+#include <string>
 #include <vector>
 
-#include <QPointF>
-#include <QPoint>
 #include <QLine>
+#include <QPoint>
+#include <QPointF>
 #include <QPolygon>
 #include <QVector3D>
 
@@ -19,17 +19,31 @@ class Model3D {
   public:
     Model3D(const std::string &filename);
 
-    std::vector<QPolygon> getSlice() const;
-	const int INT_SCALE = 1000000;
+    std::vector<std::vector<QPolygon>> getSlices();
+
+	QRect getBounds() const {
+		QPoint p1(x_left * INT_SCALE, y_left * INT_SCALE);
+		QPoint p2(x_right * INT_SCALE, y_right * INT_SCALE);
+		return QRect(p1, p2);
+	}
+
+    const long INT_SCALE = 1000000;
 
   private:
     std::vector<QVector3D> vertices;
     std::vector<std::array<std::size_t, 3>> faces;
-	std::vector<QLine> getLines() const;
-	QPolygon previous_layer;
-
+    QPolygon previous_layer;
+	float z_top = -99999, z_bottom = 99999;
+	float x_left = 99999, x_right = -99999;
+	float y_left = 99999, y_right = -99999;
     qreal layerHeight, currentLayer;
 
+    std::vector<QLine> getLines() const;
+    std::vector<QPolygon> getSlice() const;
+
+    /**
+     * Find max z value for triangle.
+     */
     inline float max_z(const std::array<std::size_t, 3> &f) const {
         float z = vertices[f[0]].z();
         z = std::max(z, vertices[f[1]].z());
@@ -37,6 +51,9 @@ class Model3D {
         return z;
     }
 
+    /**
+     * Find min z value for triangle.
+     */
     inline float min_z(const std::array<std::size_t, 3> &f) const {
         float z = vertices[f[0]].z();
         z = std::min(z, vertices[f[1]].z());
@@ -57,8 +74,8 @@ class Model3D {
         v.setY(vertices[p1].y() + ((currentLayer - vertices[p1].z()) *
                                    (vertices[p2].y() - vertices[p1].y())) /
                                       (vertices[p2].z() - vertices[p1].z()));
-		v *= INT_SCALE;
-		return v.toPoint();
+        v *= INT_SCALE;
+        return v.toPoint();
     }
 };
 

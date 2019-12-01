@@ -12,9 +12,6 @@
 #include <QPoint>
 
 Model3D::Model3D(const std::string &filename) {
-    layerHeight = 0.2;
-    currentLayer = 0.125;
-
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(
         filename, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
@@ -29,15 +26,45 @@ Model3D::Model3D(const std::string &filename) {
 
     const aiMesh *mesh = scene->mMeshes[0];
 
-    std::cout << "Loaded " << scene->mNumMeshes << " meshes" << std::endl;
+    // std::cout << "Loaded " << scene->mNumMeshes << " meshes" << std::endl;
     std::cout << "has faces: " << mesh->HasFaces()
               << " faces: " << mesh->mNumFaces << std::endl;
 
     for (std::size_t i = 0; i < mesh->mNumVertices; i++) {
         auto ov = mesh->mVertices[i];
+		if (ov.z < z_bottom) 
+			z_bottom = ov.z;
+		if (ov.z > z_top) 
+			z_top = ov.z;
+		if (ov.x < x_left)
+			x_left = ov.x;
+		if (ov.x > x_right)
+			x_right = ov.x;
+		if (ov.y < y_left)
+			y_left = ov.y;
+		if (ov.y > y_right)
+			y_right = ov.y;
         QVector3D v(ov.x, ov.y, ov.z);
         vertices.push_back(v);
     }
+
+	// Move points to positive values
+	float x_offset = 0, y_offset = 0;
+	if (x_left < 0) {
+		x_offset = fabs(x_left);
+		x_left = 0;
+		x_right += x_offset;
+	}
+	if (y_left < 0) {
+		y_offset = fabs(y_left);
+		y_left = 0;
+		y_right += y_offset;
+	}
+	if (x_offset != 0 || y_offset != 0) { 
+		for (auto &v :vertices ) {
+			v += QVector3D(x_offset, y_offset, 0);
+		}
+	}
 
     for (std::size_t i = 0; i < mesh->mNumFaces; i++) {
         auto face = mesh->mFaces[i];
@@ -46,13 +73,31 @@ Model3D::Model3D(const std::string &filename) {
                                         face.mIndices[2]};
         faces.push_back(f);
     }
+    layerHeight = 0.2;
+    currentLayer = z_bottom + 0.1;
+}
+
+std::vector<std::vector<QPolygon>> Model3D::getSlices() {
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+	std::vector<std::vector<QPolygon>> slices;
+	while (currentLayer < z_top) {
+		auto slice = getSlice();
+		slices.push_back(slice);
+		currentLayer += layerHeight;
+	}
+	
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << "Sliced in: " << duration << "ms " << std::endl;
+	
+	return slices;
 }
 
 std::vector<QPolygon> Model3D::getSlice() const {
-    auto t1 = std::chrono::high_resolution_clock::now();
-
     auto lines = getLines();
-    std::cout << lines.size() << " lines" << std::endl;
+    // std::cout << lines.size() << " lines" << std::endl;
 
     std::vector<QPolygon> polygons;
     std::vector<bool> used(lines.size());
@@ -106,13 +151,7 @@ std::vector<QPolygon> Model3D::getSlice() const {
         polygons.push_back(poly);
     }
 
-    std::cout << polygons.size() << " Polygons" << std::endl;
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
-    std::cout << "Slice in: " << duration << "ms " << std::endl;
-
+    // std::cout << polygons.size() << " Polygons" << std::endl;
     return polygons;
 }
 
@@ -181,11 +220,6 @@ std::vector<QLine> Model3D::getLines() const {
                         lines.push_back(l);
                     }
                 } else if (on.size() == 2) {
-                    if (on.size() == 3) {
-                        std::cout << "3 on a line flat surface" << std::endl;
-                        std::cout << "Not implemented" << std::endl;
-                        continue;
-                    }
                     std::cout << "2 on a line" << std::endl;
                     // Keep 2 lines
                     QPointF v1_tmp(vertices[on[0]].x(), vertices[on[0]].y());

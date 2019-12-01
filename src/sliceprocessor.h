@@ -8,11 +8,16 @@
 
 class SliceProcessor {
   public:
-    SliceProcessor();
-    std::vector<QPolygon> process(const std::vector<QPolygon> &paths) const;
+    SliceProcessor(const QRect bounds);
+    std::vector<std::vector<QPolygon>>
+    process(const std::vector<std::vector<QPolygon>> &paths) const;
 
   private:
-    const int nozzle_offset = -0.4 * 1000000;
+	const QRect bounds;
+    const long nozzle_offset = -0.4 * 1000000;
+
+	std::vector<QPolygon>
+    processSlice(const std::vector<QPolygon> &paths) const;
     ClipperLib::Paths getEdges(const ClipperLib::Paths &paths,
                                const bool first_path) const;
     ClipperLib::Paths getInfill(const ClipperLib::Paths &edges,
