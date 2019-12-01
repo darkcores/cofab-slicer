@@ -31,6 +31,7 @@ SliceProcessor::processSlice(const std::vector<QPolygon> &paths) const {
     ClipperLib::Clipper clip;
     for (auto &path : paths) {
         ClipperLib::Path p;
+		p.reserve(path.size());
         for (auto &point : path) {
             p << ClipperLib::IntPoint(point.x(), point.y());
         }
@@ -40,8 +41,6 @@ SliceProcessor::processSlice(const std::vector<QPolygon> &paths) const {
     if (!clip.Execute(ClipperLib::ClipType::ctXor, clippedpaths)) {
         std::cout << "There was an error clipping paths" << std::endl;
     }
-    // ClipperLib::CleanPolygons(clippedpaths);
-    // TODO speedups
 
     ClipperLib::Paths processed;
     ClipperLib::CleanPolygons(clippedpaths);

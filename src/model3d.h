@@ -19,14 +19,24 @@ class Model3D {
   public:
     Model3D(const std::string &filename);
 
+	/**
+	 * Generate all slices for this object.
+	 */
     std::vector<std::vector<QPolygon>> getSlices();
 
+	/**
+	 * Get the XY-axes bounds of this objects.
+	 */
 	QRect getBounds() const {
 		QPoint p1(x_left * INT_SCALE, y_left * INT_SCALE);
 		QPoint p2(x_right * INT_SCALE, y_right * INT_SCALE);
 		return QRect(p1, p2);
 	}
 
+	/**
+	 * All points (floating point) are moved to positive values and
+	 * scaled to integer representations. (for use with clipping algorithms)
+	 */
     const long INT_SCALE = 1000000;
 
   private:

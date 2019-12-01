@@ -6,9 +6,21 @@
 
 #include "clipper.hpp"
 
+/**
+ * Processing slices to paths for a 3D printer.
+ */
 class SliceProcessor {
   public:
+    /**
+     * Create a slice processor.  i
+     * @param bounds Bounding rectangle used for clipping lines.
+     */
     SliceProcessor(const QRect bounds);
+
+	/**
+	 * Process slices.
+	 * @param paths slices.
+	 */
     std::vector<std::vector<QPolygon>>
     process(const std::vector<std::vector<QPolygon>> &paths) const;
 
