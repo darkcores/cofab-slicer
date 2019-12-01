@@ -5,7 +5,7 @@
 
 class SlicerOptions;
 class STLViewer;
-class GCodeViewer;
+class SliceViewer;
 class QAction;
 class Model3D;
 
@@ -19,7 +19,7 @@ class MainWindow : public QMainWindow {
   private:
 	SlicerOptions *slicerOptions;
 	STLViewer *stlViewer;
-	GCodeViewer *gcodeViewer;
+	SliceViewer *gcodeViewer;
 	QAction *openAct, *exportAct, *quitAct;
 	QAction *optionViewAct, *stlViewAct, *gcodeViewAct;
 	Model3D *model;

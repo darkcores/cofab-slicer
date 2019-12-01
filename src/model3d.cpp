@@ -12,6 +12,8 @@
 #include <QPoint>
 
 Model3D::Model3D(const std::string &filename) {
+    auto t1 = std::chrono::high_resolution_clock::now();
+
     Assimp::Importer importer;
     const aiScene *scene = importer.ReadFile(
         filename, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices |
@@ -30,6 +32,7 @@ Model3D::Model3D(const std::string &filename) {
     std::cout << "has faces: " << mesh->HasFaces()
               << " faces: " << mesh->mNumFaces << std::endl;
 
+	vertices.reserve(mesh->mNumVertices);
     for (std::size_t i = 0; i < mesh->mNumVertices; i++) {
         auto ov = mesh->mVertices[i];
 		if (ov.z < z_bottom) 
@@ -66,6 +69,7 @@ Model3D::Model3D(const std::string &filename) {
 		}
 	}
 
+	faces.reserve(mesh->mNumFaces);
     for (std::size_t i = 0; i < mesh->mNumFaces; i++) {
         auto face = mesh->mFaces[i];
         assert(face.mNumIndices == 3);
@@ -75,6 +79,11 @@ Model3D::Model3D(const std::string &filename) {
     }
     layerHeight = 0.2;
     currentLayer = z_bottom + 0.1;
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration =
+        std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+    std::cout << "Loaded object in: " << duration << "ms " << std::endl;
 }
 
 std::vector<std::vector<QPolygon>> Model3D::getSlices() {
@@ -166,8 +175,6 @@ std::vector<QLine> Model3D::getLines() const {
         for (auto &f : faces) {
             if (min_z(f) <= layer && max_z(f) >= layer) {
                 // Calculate line
-                // const auto face = getFace(f);
-
                 // Get the number of faces above / under line
                 std::vector<std::size_t> above, on, under;
                 for (auto vertex : f) {

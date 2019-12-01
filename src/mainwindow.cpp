@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "gcodeviewer.h"
+#include "sliceviewer.h"
 #include "sliceroptions.h"
 #include "stlviewer.h"
 
@@ -54,7 +54,7 @@ void MainWindow::setupDocks() {
     addDockWidget(Qt::LeftDockWidgetArea, slicerOptions);
     stlViewer = new STLViewer(this);
     addDockWidget(Qt::RightDockWidgetArea, stlViewer);
-    gcodeViewer = new GCodeViewer(this);
+    gcodeViewer = new SliceViewer(this);
     addDockWidget(Qt::RightDockWidgetArea, gcodeViewer);
 }
 
@@ -70,7 +70,7 @@ void MainWindow::openFile() {
 	// gcodeViewer->setSlice(slice);
 	SliceProcessor sp(bounds);
 	auto clipped = sp.process(slices);
-	gcodeViewer->setSlice(clipped[0]);
+	gcodeViewer->setSlices(&clipped);
 }
 
 void MainWindow::exportGcode() {}

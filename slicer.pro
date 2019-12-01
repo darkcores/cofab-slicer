@@ -4,7 +4,7 @@ QT       += core widgets 3dcore 3drender 3dinput 3dextras 3dlogic 3danimation
 
 CONFIG += c++11
 
-QMAKE_CXXFLAGS_RELEASE = "-march=native -O2 -msse -msse2 -msse3 -mssse3"
+QMAKE_CXXFLAGS_RELEASE = "-march=native -mtune=native -O3 -msse -msse2 -msse3 -mssse3"
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -33,6 +33,8 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-# Dependecy for assimp
+# Dependency for assimp
 LIBS += -lassimp
-LIBS += -lpolyclipping
+# LIBS += -lpolyclipping
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -fopenmp

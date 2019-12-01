@@ -4,7 +4,7 @@
 #include <QPolygonF>
 #include <vector>
 
-#include <polyclipping/clipper.hpp>
+#include "clipper.hpp"
 
 class SliceProcessor {
   public:
@@ -13,15 +13,14 @@ class SliceProcessor {
     process(const std::vector<std::vector<QPolygon>> &paths) const;
 
   private:
-	const QRect bounds;
+    const QRect bounds;
     const long nozzle_offset = -0.4 * 1000000;
 
-	std::vector<QPolygon>
+    std::vector<QPolygon>
     processSlice(const std::vector<QPolygon> &paths) const;
     ClipperLib::Paths getEdges(const ClipperLib::Paths &paths,
                                const bool first_path) const;
-    ClipperLib::Paths getInfill(const ClipperLib::Paths &edges,
-                                const int direction = 0) const;
+    ClipperLib::Paths getInfill(const ClipperLib::Paths &edges) const;
 };
 
 #endif

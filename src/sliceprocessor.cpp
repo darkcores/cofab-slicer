@@ -1,8 +1,9 @@
 #include "sliceprocessor.h"
 
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <iostream>
+#include <omp.h>
 
 SliceProcessor::SliceProcessor(const QRect bounds) : bounds(bounds) {}
 
@@ -10,18 +11,19 @@ std::vector<std::vector<QPolygon>>
 SliceProcessor::process(const std::vector<std::vector<QPolygon>> &paths) const {
     auto t1 = std::chrono::high_resolution_clock::now();
 
-	std::vector<std::vector<QPolygon>> processed;
-	for (auto &path : paths) {
-		auto slice = processSlice(path);
-		processed.push_back(slice);
-	}
-	
+    std::vector<std::vector<QPolygon>> processed(paths.size());
+#pragma omp parallel for
+    for (std::size_t i = 0; i < paths.size(); i++) {
+        auto slice = processSlice(paths[i]);
+        processed[i] = slice;
+    }
+
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
     std::cout << "Processed in: " << duration << "ms " << std::endl;
-	
-	return processed;
+
+    return processed;
 }
 
 std::vector<QPolygon>
@@ -81,9 +83,8 @@ ClipperLib::Paths SliceProcessor::getEdges(const ClipperLib::Paths &paths,
     return newpaths;
 }
 
-#pragma message "Direction not yet implemented (TODO): " __FILE__
-ClipperLib::Paths SliceProcessor::getInfill(const ClipperLib::Paths &edges,
-                                            const int direction) const {
+ClipperLib::Paths
+SliceProcessor::getInfill(const ClipperLib::Paths &edges) const {
     ClipperLib::Paths contour;
     ClipperLib::ClipperOffset co;
     int offset = nozzle_offset;
@@ -101,7 +102,7 @@ ClipperLib::Paths SliceProcessor::getInfill(const ClipperLib::Paths &edges,
     long x = bounds.left(), y = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-	const long incr = std::sqrt((0.4 * 0.4) / 2) * 1000000 * 10;
+    const long incr = std::sqrt((0.4 * 0.4) / 2) * 1000000 * 10;
     // std::cout << "incr: " << incr << std::endl;
     const long lineoffset =
         1000000000; // TODO get max bed size or calculate from bounds
