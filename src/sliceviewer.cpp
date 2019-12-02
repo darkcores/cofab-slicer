@@ -9,6 +9,7 @@
 #include <QPushButton>
 #include <QRandomGenerator>
 #include <QColorDialog>
+#include <QTimer>
 
 SliceViewer::SliceViewer(QWidget *parent) : QDockWidget(parent) {
     currentSlice = 0;
@@ -37,6 +38,14 @@ SliceViewer::SliceViewer(QWidget *parent) : QDockWidget(parent) {
     auto nextBtn = new QPushButton("Next");
     connect(nextBtn, &QPushButton::clicked, this, &SliceViewer::nextSlice);
     controls->addWidget(nextBtn);
+
+    auto playBtn = new QPushButton("Play");
+    connect(playBtn, &QPushButton::clicked, this, &SliceViewer::play);
+    controls->addWidget(playBtn);
+
+    auto resetBtn = new QPushButton("Reset");
+    connect(resetBtn, &QPushButton::clicked, this, &SliceViewer::reset);
+    controls->addWidget(resetBtn);
 
     auto controlWidget = new QWidget(this);
     controlWidget->setLayout(controls);
@@ -75,4 +84,17 @@ void SliceViewer::changeColor() {
 	randColorBtn->setChecked(false);
     auto newColor = QColorDialog::getColor(slice->getColor(), this);
 	slice->setColor(newColor);
+}
+
+void SliceViewer::play() {
+    if (currentSlice + 1 < slices.size()) {
+        currentSlice++;
+        slice->setSlice(this->slices[currentSlice]);
+		QTimer::singleShot(175, this, SLOT(play()));
+    }
+}
+
+void SliceViewer::reset() {
+	currentSlice = 0;
+	slice->setSlice(this->slices[currentSlice]);
 }

@@ -27,6 +27,8 @@ class SliceViewer : public QDockWidget {
 	void prevSlice();
 	void randColorToggle(bool value);
 	void changeColor();
+	void play();
+	void reset();
 };
 
 #endif // SLICEVIEWER_H
