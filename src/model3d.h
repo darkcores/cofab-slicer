@@ -38,7 +38,7 @@ class Model3D {
      * All points (floating point) are moved to positive values and
      * scaled to integer representations. (for use with clipping algorithms)
      */
-    const long INT_SCALE = 1000000;
+    const long INT_SCALE = 10000;
 
 	void setLayerHeight(const double height) { layerHeight = height; }
 

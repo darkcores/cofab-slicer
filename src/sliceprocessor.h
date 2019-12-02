@@ -26,7 +26,7 @@ class SliceProcessor {
 
   private:
     const QRect bounds;
-    const long nozzle_offset = -0.4 * 1000000;
+    const long nozzle_offset = -0.4 * 10000;
 
     std::vector<QPolygon>
     processSlice(const std::vector<QPolygon> &paths) const;

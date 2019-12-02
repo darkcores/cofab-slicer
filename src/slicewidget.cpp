@@ -30,7 +30,7 @@ void SliceWidget::setSlice(const std::vector<QPolygon> slice) {
     lines = slice;
 	for (auto &line : lines) {
 		for (auto &pt : line) {
-            pt /= 100000;
+            pt /= 2000;
         }
 	}
     this->repaint();

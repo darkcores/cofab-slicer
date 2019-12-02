@@ -101,7 +101,7 @@ SliceProcessor::getInfill(const ClipperLib::Paths &edges) const {
     long x = bounds.left(), y = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt((0.4 * 0.4) / 2) * 1000000 * 10;
+    const long incr = std::sqrt((0.4 * 0.4) / 2) * 10000 * 10;
     // std::cout << "incr: " << incr << std::endl;
     const long lineoffset =
         1000000000; // TODO get max bed size or calculate from bounds
