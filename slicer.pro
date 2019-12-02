@@ -4,7 +4,7 @@ QT       += core widgets 3dcore 3drender 3dinput 3dextras 3dlogic 3danimation
 
 CONFIG += c++11
 
-QMAKE_CXXFLAGS_RELEASE = "-march=native -mtune=native -O3 -msse -msse2 -msse3 -mssse3"
+QMAKE_CXXFLAGS_RELEASE = "-flto -march=native -mtune=native -O3 -msse -msse2 -msse3 -mssse3"
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -19,6 +19,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
+    3rdparty/polyclipping/clipper.cpp \
     src/*.cpp
 
 HEADERS += \
@@ -38,3 +39,5 @@ LIBS += -lassimp
 # LIBS += -lpolyclipping
 QMAKE_CXXFLAGS += -fopenmp
 LIBS += -fopenmp
+
+QMAKE_LFLAGS += "-flto"

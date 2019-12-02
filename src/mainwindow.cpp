@@ -15,7 +15,8 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // Fix layout without central widget
     this->setDockNestingEnabled(true);
-    this->resize(800, 600);
+    this->resize(1200, 800);
+	model = nullptr;
 
     setupMenu();
     setupDocks();
@@ -70,7 +71,7 @@ void MainWindow::openFile() {
 	// gcodeViewer->setSlice(slice);
 	SliceProcessor sp(bounds);
 	auto clipped = sp.process(slices);
-	gcodeViewer->setSlices(&clipped);
+	gcodeViewer->setSlices(clipped);
 }
 
 void MainWindow::exportGcode() {}

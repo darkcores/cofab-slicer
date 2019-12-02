@@ -4,15 +4,21 @@
 #include "model3d.h"
 #include <QDockWidget>
 
+class SliceWidget;
+
+/**
+ * Viewer for sliced paths.
+ */
 class SliceViewer : public QDockWidget {
     Q_OBJECT
   public:
     explicit SliceViewer(QWidget *parent = nullptr);
-	void setSlices(const std::vector<std::vector<QPolygon>> *slices);
+	void setSlices(std::vector<std::vector<QPolygon>> slices);
 
   private:
-	const std::vector<std::vector<QPolygon>> *slices;
+	std::vector<std::vector<QPolygon>> slices;
 	std::size_t currentSlice;
+	SliceWidget *slice;
 
   public slots:
 	// void nextSlice();

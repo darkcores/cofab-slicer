@@ -4,7 +4,7 @@
 #include <QPolygonF>
 #include <vector>
 
-#include "clipper.hpp"
+#include "polyclipping/clipper.hpp"
 
 /**
  * Processing slices to paths for a 3D printer.

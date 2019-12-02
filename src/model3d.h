@@ -18,38 +18,41 @@
 class Model3D {
   public:
     Model3D(const std::string &filename);
+	~Model3D() {};
 
-	/**
-	 * Generate all slices for this object.
-	 */
-    std::vector<std::vector<QPolygon>> getSlices();
+    /**
+     * Generate all slices for this object.
+     */
+    std::vector<std::vector<QPolygon>> getSlices() const;
 
-	/**
-	 * Get the XY-axes bounds of this objects.
-	 */
-	QRect getBounds() const {
-		QPoint p1(x_left * INT_SCALE, y_left * INT_SCALE);
-		QPoint p2(x_right * INT_SCALE, y_right * INT_SCALE);
-		return QRect(p1, p2);
-	}
+    /**
+     * Get the XY-axes bounds of this objects.
+     */
+    QRect getBounds() const {
+        QPoint p1(x_left * INT_SCALE, y_left * INT_SCALE);
+        QPoint p2(x_right * INT_SCALE, y_right * INT_SCALE);
+        return QRect(p1, p2);
+    }
 
-	/**
-	 * All points (floating point) are moved to positive values and
-	 * scaled to integer representations. (for use with clipping algorithms)
-	 */
+    /**
+     * All points (floating point) are moved to positive values and
+     * scaled to integer representations. (for use with clipping algorithms)
+     */
     const long INT_SCALE = 1000000;
+
+	void setLayerHeight(const double height) { layerHeight = height; }
 
   private:
     std::vector<QVector3D> vertices;
     std::vector<std::array<std::size_t, 3>> faces;
     QPolygon previous_layer;
-	float z_top = -99999, z_bottom = 99999;
-	float x_left = 99999, x_right = -99999;
-	float y_left = 99999, y_right = -99999;
-    qreal layerHeight, currentLayer;
+    float z_top = -99999, z_bottom = 99999;
+    float x_left = 99999, x_right = -99999;
+    float y_left = 99999, y_right = -99999;
+    double layerHeight;
 
-    std::vector<QLine> getLines() const;
-    std::vector<QPolygon> getSlice() const;
+    std::vector<QLine> getLines(const double currentLayer) const;
+    std::vector<QPolygon> getSlice(const double currentLayer) const;
 
     /**
      * Find max z value for triangle.
@@ -76,7 +79,8 @@ class Model3D {
      * @param p1 first point index.
      * @param p2 second point index.
      */
-    inline QPoint getZPoint(const std::size_t p1, const std::size_t p2) const {
+    inline QPoint getZPoint(const std::size_t p1, const std::size_t p2,
+                            const double currentLayer) const {
         QPointF v;
         v.setX(vertices[p1].x() + ((currentLayer - vertices[p1].z()) *
                                    (vertices[p2].x() - vertices[p1].x())) /
