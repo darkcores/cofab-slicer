@@ -5,6 +5,7 @@
 #include <QDockWidget>
 
 class SliceWidget;
+class QCheckBox;
 
 /**
  * Viewer for sliced paths.
@@ -16,13 +17,16 @@ class SliceViewer : public QDockWidget {
 	void setSlices(std::vector<std::vector<QPolygon>> slices);
 
   private:
+	QCheckBox *randColorBtn;
 	std::vector<std::vector<QPolygon>> slices;
 	std::size_t currentSlice;
 	SliceWidget *slice;
 
   public slots:
-	// void nextSlice();
-	// void prevSlice();
+	void nextSlice();
+	void prevSlice();
+	void randColorToggle(bool value);
+	void changeColor();
 };
 
 #endif // SLICEVIEWER_H

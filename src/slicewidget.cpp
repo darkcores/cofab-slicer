@@ -39,6 +39,10 @@ void SliceWidget::setSlice(const std::vector<QPolygon> slice) {
 void SliceWidget::setColor(const QColor color) {
     random_color = false;
     this->color = color;
+	this->repaint();
 }
 
-void SliceWidget::setRandomColor(const bool random) { random_color = random; }
+void SliceWidget::setRandomColor(const bool random) {
+	random_color = random;
+	this->repaint();
+}
