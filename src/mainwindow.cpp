@@ -1,6 +1,6 @@
 #include "mainwindow.h"
-#include "sliceviewer.h"
 #include "sliceroptions.h"
+#include "sliceviewer.h"
 #include "stlviewer.h"
 
 #include "model3d.h"
@@ -16,15 +16,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // Fix layout without central widget
     this->setDockNestingEnabled(true);
     this->resize(1200, 800);
-	model = nullptr;
+    model = nullptr;
 
     setupMenu();
     setupDocks();
 }
 
 MainWindow::~MainWindow() {
-	if (model)
-		delete model;
+    if (model)
+        delete model;
 }
 
 void MainWindow::setupMenu() {
@@ -62,16 +62,20 @@ void MainWindow::setupDocks() {
 void MainWindow::openFile() {
     QUrl file = QFileDialog::getOpenFileUrl(this, tr("Open 3D model"), QUrl(),
                                             tr("3D model (*.stl)"));
+    loadFile(file);
+}
+
+void MainWindow::loadFile(QUrl file) {
     stlViewer->loadStl(file);
-	if (model)
-		delete model;
-	model = new Model3D(file.path().toStdString());
-	auto slices = model->getSlices();
-	auto bounds = model->getBounds();
-	// gcodeViewer->setSlice(slice);
-	SliceProcessor sp(bounds);
-	auto clipped = sp.process(slices);
-	gcodeViewer->setSlices(clipped);
+    if (model)
+        delete model;
+    model = new Model3D(file.path().toStdString());
+    auto slices = model->getSlices();
+    auto bounds = model->getBounds();
+    // gcodeViewer->setSlice(slice);
+    SliceProcessor sp(bounds);
+    auto clipped = sp.process(slices);
+    gcodeViewer->setSlices(clipped);
 }
 
 void MainWindow::exportGcode() {}

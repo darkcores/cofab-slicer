@@ -16,16 +16,18 @@ class MainWindow : public QMainWindow {
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    void loadFile(QUrl filename);
+
   private:
-	SlicerOptions *slicerOptions;
-	STLViewer *stlViewer;
-	SliceViewer *gcodeViewer;
-	QAction *openAct, *exportAct, *quitAct;
-	QAction *optionViewAct, *stlViewAct, *gcodeViewAct;
-	Model3D *model;
+    SlicerOptions *slicerOptions;
+    STLViewer *stlViewer;
+    SliceViewer *gcodeViewer;
+    QAction *openAct, *exportAct, *quitAct;
+    QAction *optionViewAct, *stlViewAct, *gcodeViewAct;
+    Model3D *model;
 
     void setupMenu();
-	void setupDocks();
+    void setupDocks();
 
   private slots:
     void openFile();
