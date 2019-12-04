@@ -26,12 +26,17 @@ class SliceProcessor {
 
   private:
     const QRect bounds;
+	int num_walls = 2; // Min 1
+	int infill_offset = 10;
     const long nozzle_offset = -0.4 * 10000;
 
     std::vector<QPolygon>
     processSlice(const std::vector<QPolygon> &paths) const;
     ClipperLib::Paths getEdges(const ClipperLib::Paths &paths,
                                const bool first_path) const;
+	/**
+	 * Get infill for region.
+	 */
     ClipperLib::Paths getInfill(const ClipperLib::Paths &edges) const;
 };
 

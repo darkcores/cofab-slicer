@@ -96,6 +96,7 @@ void SliceWidget::zoomIn() {
 		for (auto &line : lines) {
 			for (auto &p: line) {
 				p *= ((1.0f + (zoomlvl / 10.0f)) / 1500);
+				p += lastpoint;
 			}
 		}
 		this->repaint();
@@ -109,6 +110,7 @@ void SliceWidget::zoomOut() {
 		for (auto &line : lines) {
 			for (auto &p: line) {
 				p *= ((1.0f + (zoomlvl / 10.0f)) / 1500);
+				p += lastpoint;
 			}
 		}
 		this->repaint();

@@ -44,22 +44,23 @@ SliceProcessor::processSlice(const std::vector<QPolygon> &paths) const {
 
     ClipperLib::Paths processed;
     ClipperLib::CleanPolygons(clippedpaths);
-    auto edge1 = getEdges(clippedpaths, true);
-    ClipperLib::CleanPolygons(edge1);
-    auto edge2 = getEdges(edge1, false);
-    ClipperLib::CleanPolygons(edge2);
-    auto edge3 = getEdges(edge2, false);
-    processed.insert(processed.end(), edge1.begin(), edge1.end());
-    processed.insert(processed.end(), edge2.begin(), edge2.end());
-    processed.insert(processed.end(), edge3.begin(), edge3.end());
+    auto edges = getEdges(clippedpaths, true);
+    processed.insert(processed.end(), edges.begin(), edges.end());
+	for (int i = 1; i < num_walls; i++) {
+		ClipperLib::CleanPolygons(edges);
+		edges = getEdges(edges, false);
+		processed.insert(processed.end(), edges.begin(), edges.end());
+	}
 
-    ClipperLib::CleanPolygons(edge3);
-    auto infill = getInfill(edge3);
+    ClipperLib::CleanPolygons(edges);
+    auto infill = getInfill(edges);
     processed.insert(processed.end(), infill.begin(), infill.end());
 
     std::vector<QPolygon> p;
+	p.reserve(processed.size());
     for (auto &path : processed) {
         QPolygon poly;
+		poly.reserve(path.size());
         for (auto &point : path) {
             poly << QPoint(point.X, point.Y);
         }
@@ -99,20 +100,21 @@ SliceProcessor::getInfill(const ClipperLib::Paths &edges) const {
     clip.Execute(ClipperLib::ClipType::ctXor, contour_tree);
 
     long x = bounds.left(), y = bounds.top();
+	const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt((0.4 * 0.4) / 2) * 10000 * 10;
+    const long incr = std::sqrt((0.4 * 0.4) / 2) * 10000 * infill_offset;
+	lines.resize(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
-    const long lineoffset =
-        1000000000; // TODO get max bed size or calculate from bounds
-    while (x < xto || y < yto) {
-        ClipperLib::Path line;
-        line << ClipperLib::IntPoint(x - lineoffset, y + lineoffset);
-        line << ClipperLib::IntPoint(x + lineoffset, y - lineoffset);
+	ClipperLib::Path line(2);
+    while (x < 2 * xto || y < 2 * yto) {
+		line.clear();
+        line << ClipperLib::IntPoint(xfrom, y);
+        line << ClipperLib::IntPoint(x, yfrom);
         lines.push_back(line);
         line.clear();
-        line << ClipperLib::IntPoint(xto - x + lineoffset, y + lineoffset);
-        line << ClipperLib::IntPoint(xto - x - lineoffset, y - lineoffset);
+        line << ClipperLib::IntPoint(xto, y);
+        line << ClipperLib::IntPoint(xto - (x - xfrom), yfrom);
         lines.push_back(line);
         x += incr;
         y += incr;
