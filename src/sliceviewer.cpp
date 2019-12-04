@@ -39,6 +39,14 @@ SliceViewer::SliceViewer(QWidget *parent) : QDockWidget(parent) {
     connect(nextBtn, &QPushButton::clicked, this, &SliceViewer::nextSlice);
     controls->addWidget(nextBtn);
 
+    auto zoomBtn = new QPushButton("Zoom In");
+    connect(zoomBtn, &QPushButton::clicked, slice, &SliceWidget::zoomIn);
+    controls->addWidget(zoomBtn);
+
+    auto zoomOutBtn = new QPushButton("Zoom Out");
+    connect(zoomOutBtn, &QPushButton::clicked, slice, &SliceWidget::zoomOut);
+    controls->addWidget(zoomOutBtn);
+
     auto playBtn = new QPushButton("Play");
     connect(playBtn, &QPushButton::clicked, this, &SliceViewer::play);
     controls->addWidget(playBtn);

@@ -28,6 +28,7 @@ void SliceWidget::paintEvent(QPaintEvent *event) {
 }
 
 void SliceWidget::setSlice(const std::vector<QPolygon> slice) {
+	original = slice;
     lines = slice;
     for (auto &line : lines) {
         for (auto &pt : line) {
@@ -75,15 +76,41 @@ void SliceWidget::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void SliceWidget::wheelEvent(QWheelEvent *event) {
+	// std::cout << "Delta: " << event->angleDelta().y() << " "; 
 	/*
-	std::cout << "Delta: " << event->angleDelta().y() << " "; 
 	float scale = 1.0f + (event->angleDelta().y() / 256.0f);
 	std::cout << "Scale: " << scale << std::endl;
 	for (auto &line : lines) {
 		for (auto &p: line) {
 			p *= scale;
 		}
+	}
+	this->repaint();
+	*/
+}
+
+void SliceWidget::zoomIn() {
+	if (zoomlvl < 8) {
+		lines = original;
+		zoomlvl ++;
+		for (auto &line : lines) {
+			for (auto &p: line) {
+				p *= ((1.0f + (zoomlvl / 10.0f)) / 1500);
+			}
+		}
 		this->repaint();
 	}
-	*/
+}
+
+void SliceWidget::zoomOut() {
+	if (zoomlvl > -8) {
+		lines = original;
+		zoomlvl --;
+		for (auto &line : lines) {
+			for (auto &p: line) {
+				p *= ((1.0f + (zoomlvl / 10.0f)) / 1500);
+			}
+		}
+		this->repaint();
+	}
 }

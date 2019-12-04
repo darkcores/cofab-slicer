@@ -18,16 +18,21 @@ class SliceWidget : public QWidget {
   protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
-	void mouseReleaseEvent(QMouseEvent *event) override;
-	void mouseMoveEvent(QMouseEvent *event) override;
-	void wheelEvent(QWheelEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
   private:
-	QPoint lastpoint;
-    std::vector<QPolygon> lines;
+    QPoint lastpoint;
+    int zoomlvl = 0;
+    std::vector<QPolygon> lines, original;
     QColor color;
     bool random_color = true;
     bool mouse_down = false;
+
+  public slots:
+    void zoomIn();
+    void zoomOut();
 };
 
 #endif // SLICEWIDGET_H
