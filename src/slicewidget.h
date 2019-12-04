@@ -16,12 +16,18 @@ class SliceWidget : public QWidget {
     const QColor getColor() const { return color; }
 
   protected:
-    void paintEvent(QPaintEvent *event);
+    void paintEvent(QPaintEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+	void mouseReleaseEvent(QMouseEvent *event) override;
+	void mouseMoveEvent(QMouseEvent *event) override;
+	void wheelEvent(QWheelEvent *event) override;
 
   private:
+	QPoint lastpoint;
     std::vector<QPolygon> lines;
     QColor color;
     bool random_color = true;
+    bool mouse_down = false;
 };
 
 #endif // SLICEWIDGET_H

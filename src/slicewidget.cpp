@@ -8,7 +8,8 @@
 #include <iostream>
 
 SliceWidget::SliceWidget(QWidget *parent) : QWidget(parent) {
-	random_color = true;
+    random_color = true;
+	lastpoint = QPoint(0, 0);
 }
 
 void SliceWidget::paintEvent(QPaintEvent *event) {
@@ -28,21 +29,61 @@ void SliceWidget::paintEvent(QPaintEvent *event) {
 
 void SliceWidget::setSlice(const std::vector<QPolygon> slice) {
     lines = slice;
-	for (auto &line : lines) {
-		for (auto &pt : line) {
-            pt /= 2000;
+    for (auto &line : lines) {
+        for (auto &pt : line) {
+            pt /= 1500;
         }
-	}
+    }
     this->repaint();
 }
 
 void SliceWidget::setColor(const QColor color) {
     random_color = false;
     this->color = color;
-	this->repaint();
+    this->repaint();
 }
 
 void SliceWidget::setRandomColor(const bool random) {
-	random_color = random;
-	this->repaint();
+    random_color = random;
+    this->repaint();
+}
+
+void SliceWidget::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+		lastpoint = QPoint(event->x(), event->y());
+        mouse_down = true;
+    }
+}
+
+void SliceWidget::mouseReleaseEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        mouse_down = false;
+    }
+}
+
+void SliceWidget::mouseMoveEvent(QMouseEvent *event) {
+    if (mouse_down) {
+		auto point = QPoint(event->x(), event->y());
+        for (auto &line : lines) {
+			for (auto &p: line) {
+				p += (point - lastpoint);
+			}
+        }
+		lastpoint = point;
+		this->repaint();
+    }
+}
+
+void SliceWidget::wheelEvent(QWheelEvent *event) {
+	/*
+	std::cout << "Delta: " << event->angleDelta().y() << " "; 
+	float scale = 1.0f + (event->angleDelta().y() / 256.0f);
+	std::cout << "Scale: " << scale << std::endl;
+	for (auto &line : lines) {
+		for (auto &p: line) {
+			p *= scale;
+		}
+		this->repaint();
+	}
+	*/
 }

@@ -98,6 +98,7 @@ std::vector<std::vector<QPolygon>> Model3D::getSlices() const {
     std::vector<std::vector<QPolygon>> slices(num_slices);
 #pragma omp parallel for
     for (std::size_t i = 0; i < num_slices; i++) {
+		/*
         double layer = layerHeight / 2;
         std::size_t j = 0;
         while (j < i) { // This is stupid but for some reason works
@@ -105,7 +106,8 @@ std::vector<std::vector<QPolygon>> Model3D::getSlices() const {
             layer += layerHeight;
             j++;
         }
-        // double layer = ((i - 1) * layerHeight) + (0.5 * layerHeight);
+		*/
+        double layer = (0.5 * layerHeight) + (i * layerHeight);
         // std::cout << layer << "\n";
         auto slice = getSlice(layer);
         slices[i] = slice;
