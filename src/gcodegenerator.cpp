@@ -51,7 +51,8 @@ string GCodeGenerator::getGcodeSlice(const std::vector<QPolygon> slice, double z
     //connect each vertex of the polygon
     for(auto j: i){
       //layer thickness = 0.2 ==> 0.36 mm wide
-      m_extrusion +=  sqrt(pow(lastPoint.x()/INT_SCALE - j.x()/INT_SCALE, 2) + pow(lastPoint.y()/INT_SCALE - j.y()/INT_SCALE ,2));
+      //(layer height * Nozzle diameter * L)/ 1.75
+      m_extrusion += (m_zstep * 0.4 * sqrt(pow(lastPoint.x()/INT_SCALE - j.x()/INT_SCALE, 2) + pow(lastPoint.y()/INT_SCALE - j.y()/INT_SCALE ,2)))/1.75;
       out += getVectorMovementXY(j.x()/INT_SCALE, j.y()/INT_SCALE, m_extrusion);      //cout << j.x() << ", " << j.y();
       lastPoint = j;
     }
@@ -100,7 +101,6 @@ QPoint GCodeGenerator::getLastCollisionX(QPolygon polygon, QPoint start){
 //heat the bed/nozzle + extrude a bit
 string GCodeGenerator::getStartSequence(const int bedTemperature,const int nozzleTemperature){
   string out = "";
-  //"G21 ;metricvalues\nG90 ; absolute positioning\nM82 ; extruder to absolute mode \nM107 ; start with fan off \n";
 
   out += "M104 S" + std::to_string(nozzleTemperature) + " ; set temp nozzle but do not wait\nM190 S" + std::to_string(bedTemperature) + " ; set bed temp and wait\n" + "M109 S" + std::to_string(nozzleTemperature) +"; wait until temps are reached\n";
   out += "M201 X500.00 Y500.00 Z100.00 E5000.00 ;Setup machine max acceleration\n";
@@ -118,6 +118,8 @@ string GCodeGenerator::getStartSequence(const int bedTemperature,const int nozzl
   out += "G1 X10.4 Y20 Z0.28 F1500.0 E30 ;Draw the second line\n";
   out += "G92 E0 ;Reset Extruder\n";
   out += "G1 Z2.0 F3000 ;Move Z Axis up\n";
+  out += "G21 ;metricvalues\nG90 ; absolute positioning\nM82 ; extruder to absolute mode\n";
+
   //out += "G28 X0 Y0 ; X,Y to min endstops \nG28 Z0 ; z to min endstops \nG1 Z15.0 F9000 ; move platform down 15 mm \nG92 E0 ; zero extruded length \nG1 F200 E3 ; extrude 3mm \nG92 E0 ; zero extrude length \nG1 F9000 ; add text printing on lcd \nM 117 Printing\nG1 F1000\n";
 
   //end sequence out +=   "G91 ;Relative positioning\nG1 E-2 F2700 ;Retract a bit\nG1 E-2 Z0.2 F2400 ;Retract and raise Z \nG1 X5 Y5 F3000 ;Wipe out \nG1 Z10 ;Raise Z more\nG90 ;Absolute positionning";
