@@ -23,6 +23,7 @@ void GCodeGenerator::generateGcode(const std::vector<std::vector<QPolygon>> slic
  }
   //add end gcode (cooldown + move bed)
   file << getEndSequence();
+  file.close();
 }
 
 //get the movement needed for one slice
