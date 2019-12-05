@@ -50,6 +50,7 @@ class Model3D {
     float x_left = 99999, x_right = -99999;
     float y_left = 99999, y_right = -99999;
     double layerHeight;
+	int bedX = 220, bedY = 220;
 
     std::vector<QLine> getLines(const double currentLayer) const;
     std::vector<QPolygon> getSlice(const double currentLayer) const;

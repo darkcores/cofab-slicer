@@ -30,6 +30,7 @@ include_directories("./3rdparty")
 
 set(SOURCES
   3rdparty/polyclipping/clipper.cpp
+  src/gcodegenerator.cpp
   src/sliceviewer.cpp
   src/slicewidget.cpp
   src/mainwindow.cpp

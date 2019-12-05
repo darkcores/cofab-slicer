@@ -2,7 +2,7 @@
 #include "sliceroptions.h"
 #include "sliceviewer.h"
 #include "stlviewer.h"
-
+#include "gcodegenerator.h"
 #include "model3d.h"
 #include "sliceprocessor.h"
 
@@ -76,6 +76,9 @@ void MainWindow::loadFile(QUrl file) {
     SliceProcessor sp(bounds);
     auto clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
+
+	GCodeGenerator g;
+	// auto gcode = g.generateGcode(clipped);
 }
 
 void MainWindow::exportGcode() {}

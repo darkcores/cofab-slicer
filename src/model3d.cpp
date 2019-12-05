@@ -52,7 +52,7 @@ Model3D::Model3D(const std::string &filename) {
     }
 
     // Move points to positive values
-    float x_offset = 0, y_offset = 0;
+    float x_offset = 0, y_offset = 0, z_offset = 0;
     if (x_left < 0) {
         x_offset = fabs(x_left);
         x_left = 0;
@@ -63,9 +63,16 @@ Model3D::Model3D(const std::string &filename) {
         y_left = 0;
         y_right += y_offset;
     }
-    if (x_offset != 0 || y_offset != 0) {
+	if (z_bottom < 0) {
+		z_offset = fabs(z_bottom);
+		z_bottom = 0;
+		z_top += z_offset;
+	}
+	x_offset += (bedX - ((x_right - x_left) / 2));
+	y_offset += (bedY - ((y_right - y_left) / 2));
+    if (x_offset != 0 || y_offset != 0 || z_offset != 0) {
         for (auto &v : vertices) {
-            v += QVector3D(x_offset, y_offset, 0);
+            v += QVector3D(x_offset, y_offset, z_offset);
         }
     }
 
