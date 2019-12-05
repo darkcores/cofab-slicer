@@ -77,8 +77,8 @@ void MainWindow::loadFile(QUrl file) {
     auto clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
 
-	GCodeGenerator g;
-	g.generateGcode(clipped, "test.gcode");
+	  GCodeGenerator g;
+    g.generateGcode(clipped, "test.gcode");
 }
 
 void MainWindow::exportGcode() {}

@@ -51,7 +51,8 @@ string GCodeGenerator::getGcodeSlice(const std::vector<QPolygon> slice, double z
     //connect each vertex of the polygon
     for(auto j: i){
       //layer thickness = 0.2 ==> 0.36 mm wide
-      m_extrusion +=  sqrt(pow(lastPoint.x()/INT_SCALE - j.x()/INT_SCALE, 2) + pow(lastPoint.y()/INT_SCALE - j.y()/INT_SCALE ,2));
+      //(layer height * Nozzle diameter * L)/ 1.75
+      m_extrusion += (m_zstep * 0.4 * sqrt(pow(lastPoint.x()/INT_SCALE - j.x()/INT_SCALE, 2) + pow(lastPoint.y()/INT_SCALE - j.y()/INT_SCALE ,2)))/1.75;
       out += getVectorMovementXY(j.x()/INT_SCALE, j.y()/INT_SCALE, m_extrusion);      //cout << j.x() << ", " << j.y();
       lastPoint = j;
     }
