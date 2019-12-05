@@ -77,6 +77,19 @@ void MainWindow::loadFile(QUrl file) {
     auto clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
 
+	// move to center of the bed
+	QPoint offset((110 * 10000) - bounds.width(), (110 * 10000) - bounds.height());
+	std::cout << clipped[0][0][0].x() << " - " <<  clipped[0][0][0].y() << std::endl; 
+    std::cout << offset.x() << " - " << offset.y() << std::endl; 
+	for (auto &layer : clipped) {
+		for (auto &path : layer) {
+			for (auto &point : path) {
+				point += offset;
+			}
+		}
+	}
+	std::cout << clipped[0][0][0].x() << " - " <<  clipped[0][0][0].y() << std::endl; 
+
 	GCodeGenerator g;
 	g.generateGcode(clipped, "test.gcode");
 }

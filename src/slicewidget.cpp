@@ -32,6 +32,7 @@ void SliceWidget::setSlice(const std::vector<QPolygon> slice) {
     lines = slice;
     for (auto &line : lines) {
         for (auto &pt : line) {
+			// pt -= QPoint(110 * 10000, 110 * 10000);
             pt /= 1500;
         }
     }

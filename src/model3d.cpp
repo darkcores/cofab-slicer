@@ -68,8 +68,8 @@ Model3D::Model3D(const std::string &filename) {
 		z_bottom = 0;
 		z_top += z_offset;
 	}
-	x_offset += (bedX - ((x_right - x_left) / 2));
-	y_offset += (bedY - ((y_right - y_left) / 2));
+	// x_offset += (bedX - ((x_right - x_left) / 2));
+	// y_offset += (bedY - ((y_right - y_left) / 2));
     if (x_offset != 0 || y_offset != 0 || z_offset != 0) {
         for (auto &v : vertices) {
             v += QVector3D(x_offset, y_offset, z_offset);
