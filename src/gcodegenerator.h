@@ -23,14 +23,14 @@ const long INT_SCALE = 1000000;
 class GCodeGenerator{
 public:
   GCodeGenerator();
-  string generateGcode(std::vector<std::vector<QPolygon>> slices);
+  void generateGcode(const std::vector<std::vector<QPolygon>> slices, const string filename);
+  void setLayerHeight(double height);
 
 private:
   string getStartSequence(int bedTemperature, int nozzleTemperature);
   string getEndSequence();
   string getGcodeSlice(std::vector<QPolygon> slice, double z);
   string getVectorMovementXY(double X, double Y, double extrusion);
-  string getFullyFilledPolygon(QPolygon polygon);
   QPoint getFirstCollisionX(QPolygon polygon, QPoint start);
   QPoint getLastCollisionX(QPolygon polygon, QPoint start);
 
