@@ -34,6 +34,7 @@ class SliceProcessor {
     processSlice(const std::vector<QPolygon> &paths) const;
     ClipperLib::Paths getEdges(const ClipperLib::Paths &paths,
                                const bool first_path) const;
+	void optimizeInfill(ClipperLib::Paths &infill) const;
 	/**
 	 * Get infill for region.
 	 */
