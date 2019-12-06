@@ -153,7 +153,7 @@ void SliceProcessor::optimizeInfill(ClipperLib::Paths &edges) const {
 
             // Calculate for point 2 (inverted line)
             long newdist2 = std::pow(lastPoint.X - edges[j][1].X, 2);
-            newdist += std::pow(lastPoint.Y - edges[j][1].Y, 2);
+            newdist2 += std::pow(lastPoint.Y - edges[j][1].Y, 2);
             if (newdist2 < distance && newdist2 < newdist) {
                 swap = true;
                 invert = true;
