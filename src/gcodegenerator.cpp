@@ -36,7 +36,9 @@ string GCodeGenerator::getGcodeSlice(const std::vector<QPolygon> slice, double z
   double area = 3.1415 * pow(m_zstep/2, 2) + m_zstep* (0.36 - m_zstep);
 
   //lift up
-  out += "G0 Z" + std::to_string(2) + " ; lift up between polygons\n";
+
+  // out += "G0 Z" + std::to_string(2) + " ; lift up between polygons\n";
+  out += "G1 F2700 E" + std::to_string(m_extrusion) + "\n";
 
   //for each polygon generate movement
   for(auto i: slice){
@@ -45,24 +47,27 @@ string GCodeGenerator::getGcodeSlice(const std::vector<QPolygon> slice, double z
 
     //move to starting point of the polygon
     QPoint startPolygon = i.front();
-    out += getVectorMovementXY(startPolygon.x()/INT_SCALE, startPolygon.y()/INT_SCALE, m_extrusion);
+    out += getVectorMovementXY(startPolygon.x(), startPolygon.y(), m_extrusion);
     QPoint lastPoint = i.front();
-    out += "G0 Z" + std::to_string(-2) + " ; down\n";
+    // out += "G0 Z" + std::to_string(-2) + " ; down\n";
     //connect each vertex of the polygon
     for(auto j: i){
       //layer thickness = 0.2 ==> 0.36 mm wide
       //(layer height * Nozzle diameter * L)/ 1.75
-      m_extrusion += (m_zstep * 0.4 * sqrt(pow(lastPoint.x()/INT_SCALE - j.x()/INT_SCALE, 2) + pow(lastPoint.y()/INT_SCALE - j.y()/INT_SCALE ,2)))/1.75;
-      out += getVectorMovementXY(j.x()/INT_SCALE, j.y()/INT_SCALE, m_extrusion);      //cout << j.x() << ", " << j.y();
+		m_extrusion += (m_zstep * 0.4 * sqrt(pow(lastPoint.x() - j.x(), 2 + pow(lastPoint.y() - j.y() ,2)))/1.75);
+      out += getVectorMovementXY(j.x(), j.y(), m_extrusion);      //cout << j.x() << ", " << j.y();
       lastPoint = j;
     }
+
     // add line back to starting point
-    out += getVectorMovementXY(startPolygon.x()/INT_SCALE, startPolygon.y()/INT_SCALE, m_extrusion);
+	if (i.size() > 2)
+		out += getVectorMovementXY(startPolygon.x(), startPolygon.y(), m_extrusion);
+	out += "G1 F2700 E" + std::to_string(m_extrusion - 0.18888) + "\n";
     //fill the polygon
     //out+= getFullyFilledPolygon(i);
 
     //lift up
-    out += "G0 Z" + std::to_string(2) + " ; lift up between polygons\n";
+    // out += "G0 Z" + std::to_string(2) + " ; lift up between polygons\n";
   }
   //move up
   out += "G0 Z" + std::to_string(z) + " ; move to next layer\n";
@@ -75,27 +80,11 @@ string GCodeGenerator::getVectorMovementXY(double X, double Y, double extrusion)
 }
 
 QPoint GCodeGenerator::getFirstCollisionX(QPolygon polygon, QPoint start){
-  QRect r= polygon.boundingRect();
-  for(double i = r.left()/INT_SCALE +1; i<r.right()/INT_SCALE + 1; i++){
-    if(polygon.containsPoint(QPoint(i,start.y()), Qt::OddEvenFill)){
-      //cout << i <<", " << start.y()<<"\n";
-      return QPoint(i, start.y());
-    }
-  }
   return QPoint(0,0);
 }
 
 QPoint GCodeGenerator::getLastCollisionX(QPolygon polygon, QPoint start){
-  QRect r= polygon.boundingRect();
-  //cout << start.x() <<", " << start.y()<<"\n";
-  for(double i = start.x(); i<r.right()/INT_SCALE + 1; i++){
-    //OddEvenFill error?
-    if(!polygon.containsPoint(QPoint(i,start.y()), Qt::OddEvenFill)){
-      cout << "end = " << i <<", " << start.y()<<"\n";
-      return QPoint(i-1, start.y());
-    }
-  }
-  return start;
+	return QPoint(0,0);
 }
 
 //heat the bed/nozzle + extrude a bit
@@ -117,8 +106,10 @@ string GCodeGenerator::getStartSequence(const int bedTemperature,const int nozzl
   out += "G1 X10.4 Y200.0 Z0.28 F5000.0 ;Move to side a little\n";
   out += "G1 X10.4 Y20 Z0.28 F1500.0 E30 ;Draw the second line\n";
   out += "G92 E0 ;Reset Extruder\n";
-  out += "G1 Z2.0 F3000 ;Move Z Axis up\n";
+  // out += "G1 Z2.0 F3000 ;Move Z Axis up\n";
   out += "G21 ;metricvalues\nG90 ; absolute positioning\nM82 ; extruder to absolute mode\n";
+
+  out += "G1 F2700 E-0.1888";
 
   //out += "G28 X0 Y0 ; X,Y to min endstops \nG28 Z0 ; z to min endstops \nG1 Z15.0 F9000 ; move platform down 15 mm \nG92 E0 ; zero extruded length \nG1 F200 E3 ; extrude 3mm \nG92 E0 ; zero extrude length \nG1 F9000 ; add text printing on lcd \nM 117 Printing\nG1 F1000\n";
 
