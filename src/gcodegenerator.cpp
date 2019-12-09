@@ -29,43 +29,32 @@ void GCodeGenerator::generateGcode(const std::vector<std::vector<QPolygon>> slic
 //get the movement needed for one slice
 string GCodeGenerator::getGcodeSlice(const std::vector<QPolygon> slice, double z){
   string out ="";
+  QPoint lastVisitedPoint = QPoint(0,0);
   m_zstep = 0.2;
+  double distance = 0;
+  double filament_diameter = 1.75;
   //(layer height * Nozzle diameter * L)/ 1.75
-
-  //double minimumVolume = zstep * 3.1415 * (0.5 * 0.5)/4;
-  double area = 3.1415 * pow(m_zstep/2, 2) + m_zstep* (0.36 - m_zstep);
-
-  //lift up
-  out += "G0 Z" + std::to_string(2) + " ; lift up between polygons\n";
-
+  double minimumVolume = zstep * 3.14 * (0.5 * 0.5)/4;
+  double area = 3.14 * pow(m_zstep/2, 2) + m_zstep* (0.36 - m_zstep);
+  //0.0634
   //for each polygon generate movement
+  lastVisitedPoint = slice.front().front();
   for(auto i: slice){
-    //nozzle down
-    //out += "G0 Z" + std::to_string(-2) + " ; lift up between polygons\n";
-
+    distance = area * sqrt(pow(lastVisitedPoint.x()/INT_SCALE - i.x()/INT_SCALE, 2) + pow(lastVisitedPoint.y()/INT_SCALE - i.y()/INT_SCALE ,2)) / filament_diameter;
     //move to starting point of the polygon
     QPoint startPolygon = i.front();
     out += getVectorMovementXY(startPolygon.x()/INT_SCALE, startPolygon.y()/INT_SCALE, m_extrusion);
-    QPoint lastPoint = i.front();
-    out += "G0 Z" + std::to_string(-2) + " ; down\n";
     //connect each vertex of the polygon
     for(auto j: i){
       //layer thickness = 0.2 ==> 0.36 mm wide
       //(layer height * Nozzle diameter * L)/ 1.75
       m_extrusion += (m_zstep * 0.4 * sqrt(pow(lastPoint.x()/INT_SCALE - j.x()/INT_SCALE, 2) + pow(lastPoint.y()/INT_SCALE - j.y()/INT_SCALE ,2)))/1.75;
       out += getVectorMovementXY(j.x()/INT_SCALE, j.y()/INT_SCALE, m_extrusion);      //cout << j.x() << ", " << j.y();
-      lastPoint = j;
     }
     // add line back to starting point
     out += getVectorMovementXY(startPolygon.x()/INT_SCALE, startPolygon.y()/INT_SCALE, m_extrusion);
-    //fill the polygon
-    //out+= getFullyFilledPolygon(i);
-
-    //lift up
-    out += "G0 Z" + std::to_string(2) + " ; lift up between polygons\n";
+    distance = 0;
   }
-  //move up
-  out += "G0 Z" + std::to_string(z) + " ; move to next layer\n";
   return out;
 }
 
