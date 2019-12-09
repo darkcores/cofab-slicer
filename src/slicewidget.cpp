@@ -33,7 +33,7 @@ void SliceWidget::setSlice(const std::vector<QPolygon> slice) {
     for (auto &line : lines) {
         for (auto &pt : line) {
 			// pt -= QPoint(110 * 10000, 110 * 10000);
-            pt /= 1500;
+            pt /= 150;
         }
     }
     this->repaint();
@@ -91,12 +91,12 @@ void SliceWidget::wheelEvent(QWheelEvent *event) {
 }
 
 void SliceWidget::zoomIn() {
-	if (zoomlvl < 8) {
+	if (zoomlvl < 12) {
 		lines = original;
 		zoomlvl ++;
 		for (auto &line : lines) {
 			for (auto &p: line) {
-				p *= ((1.0f + (zoomlvl / 10.0f)) / 1500);
+				p *= ((1.0f + (zoomlvl / 5.0f)) / 150);
 				p += lastpoint;
 			}
 		}
@@ -105,12 +105,12 @@ void SliceWidget::zoomIn() {
 }
 
 void SliceWidget::zoomOut() {
-	if (zoomlvl > -8) {
+	if (zoomlvl > -12) {
 		lines = original;
 		zoomlvl --;
 		for (auto &line : lines) {
 			for (auto &p: line) {
-				p *= ((1.0f + (zoomlvl / 10.0f)) / 1500);
+				p *= ((1.0f + (zoomlvl / 5.0f)) / 150);
 				p += lastpoint;
 			}
 		}

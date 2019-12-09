@@ -1,10 +1,11 @@
 #include "mainwindow.h"
-#include "sliceroptions.h"
-#include "sliceviewer.h"
-#include "stlviewer.h"
+#include "gcodedummy.h"
 #include "gcodegenerator.h"
 #include "model3d.h"
 #include "sliceprocessor.h"
+#include "sliceroptions.h"
+#include "sliceviewer.h"
+#include "stlviewer.h"
 
 #include <QAction>
 #include <QApplication>
@@ -77,21 +78,20 @@ void MainWindow::loadFile(QUrl file) {
     auto clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
 
-	// move to center of the bed
-	QPoint offset((110 * 10000) - (bounds.width() / 2), (110 * 10000) - (bounds.height() / 2));
-	// std::cout << "1: " << clipped[0][0][0].x() / 10000 << " - " <<  clipped[0][0][0].y() / 10000 << std::endl; 
-    // std::cout << offset.x() << " - " << offset.y() << std::endl; 
-	for (auto &layer : clipped) {
-		for (auto &path : layer) {
-			for (auto &point : path) {
-				point += offset;
-			}
-		}
-	}
-	// std::cout << "2: " << clipped[0][0][0].x() / 10000 << " - " <<  clipped[0][0][0].y() / 10000 << std::endl; 
+    // move to center of the bed
+    QPoint offset((110 * 1000) - (bounds.width() / 2),
+                  (110 * 1000) - (bounds.height() / 2));
+    for (auto &layer : clipped) {
+        for (auto &path : layer) {
+            for (auto &point : path) {
+                point += offset;
+            }
+        }
+    }
 
-	GCodeGenerator g;
-	g.generateGcode(clipped, "test.gcode");
+    // GCodeGenerator g;
+    // g.generateGcode(clipped, "test.gcode");
+    exportSlices(clipped);
 }
 
 void MainWindow::exportGcode() {}
