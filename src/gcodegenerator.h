@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fstream>
 using namespace std;
+const long INT_SCALE = 10000;
 
 class GCodeGenerator{
 public:

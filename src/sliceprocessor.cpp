@@ -219,10 +219,10 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
         ClipperLib::Path p;
         ClipperLib::Paths ps;
         // p << pt;
-        p << ClipperLib::IntPoint(pt.X - 5, pt.Y - 5);
-        p << ClipperLib::IntPoint(pt.X + 5, pt.Y - 5);
-        p << ClipperLib::IntPoint(pt.X + 5, pt.Y + 5);
-        p << ClipperLib::IntPoint(pt.X - 5, pt.Y + 5);
+        p << ClipperLib::IntPoint(pt.X - 2, pt.Y - 2);
+        p << ClipperLib::IntPoint(pt.X + 2, pt.Y - 2);
+        p << ClipperLib::IntPoint(pt.X + 2, pt.Y + 2);
+        p << ClipperLib::IntPoint(pt.X - 2, pt.Y + 2);
         clippt.AddPath(p, ClipperLib::PolyType::ptSubject, true);
         clippt.AddPaths(clipped_slices[idx - 1], ClipperLib::PolyType::ptClip,
                         true);
