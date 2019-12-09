@@ -240,14 +240,16 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
             } else {
                 bad++;
             }
+			int pton = 0;
 			for (std::size_t j = 1; j < edges[i].size(); j++) {
-				if (checkpt(edges[i][j])) {
+				if (checkpt(edges[i][j]) && pton > 1) {
 					ClipperLib::Path tmp(edges[i].begin(), edges[i].begin() + j);
 					std::move(edges[i].begin() + j, edges[i].end(), edges[i].begin());
 					std::move(tmp.begin(), tmp.end(), edges[i].end() - j);
 					moved++;
 					break;
 				}
+				pton++;
 			}
         }
         if (bad > 0) {
@@ -287,7 +289,7 @@ void SliceProcessor::optimizeInfill(ClipperLib::Paths &edges) const {
     distance = std::pow(lastPoint.X - edges[1][0].X, 2);
     distance += std::pow(lastPoint.Y - edges[1][0].Y, 2);
     for (std::size_t i = 1; i < edges.size() - 1; i++) {
-        for (std::size_t j = i + 1; j < edges.size(); j++) {
+        for (std::size_t j = i; j < edges.size(); j++) {
             bool swap = false;
             bool invert = false;
             long newdist;
