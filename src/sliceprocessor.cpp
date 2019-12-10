@@ -68,6 +68,7 @@ SliceProcessor::processSlice(const ClipperLib::Paths &clippedpaths,
     }
     optimizeEdges(processed, idx);
     ClipperLib::CleanPolygons(edges);
+	edges = getEdges(edges, true);
 
     auto dense = getDenseArea(edges, idx);
     // processed = dense;
@@ -116,7 +117,7 @@ ClipperLib::Paths
 SliceProcessor::getInfill(const ClipperLib::Paths &edges) const {
     ClipperLib::Paths contour;
     ClipperLib::ClipperOffset co;
-    int offset = nozzle_offset;
+    int offset = nozzle_offset / 2;
     co.AddPaths(edges, ClipperLib::JoinType::jtRound,
                 ClipperLib::EndType::etClosedPolygon);
     co.Execute(contour, offset); // 1/2 nozzle * INT_SCALE
@@ -132,8 +133,8 @@ SliceProcessor::getInfill(const ClipperLib::Paths &edges) const {
     const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt(pow(2 * (0.4 * 1000), 2)) / 2 * infill_offset;
-    lines.resize(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
+    const long incr = std::sqrt(pow(2 * (0.4 * 1000), 2) / 2) * infill_offset;
+    lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
     ClipperLib::Path line(2);
     while (x < 2 * xto || y < 2 * yto) {
@@ -164,7 +165,7 @@ ClipperLib::Paths SliceProcessor::getDenseInfill(const ClipperLib::Paths &edges,
                                                  const bool direction) const {
     ClipperLib::Paths contour;
     ClipperLib::ClipperOffset co;
-    int offset = nozzle_offset;
+    int offset = nozzle_offset / 2;
     co.AddPaths(edges, ClipperLib::JoinType::jtRound,
                 ClipperLib::EndType::etClosedPolygon);
     co.Execute(contour, offset); // 1/2 nozzle * INT_SCALE
@@ -180,8 +181,8 @@ ClipperLib::Paths SliceProcessor::getDenseInfill(const ClipperLib::Paths &edges,
     const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt(pow(2 * (0.4 * 1000), 2)) / 2;
-    lines.resize(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
+    const long incr = std::sqrt(pow(2 * (0.4 * 1000), 2) / 2);
+    lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
     ClipperLib::Path line(2);
     while (x < 2 * xto || y < 2 * yto) {
@@ -242,7 +243,7 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
             }
 			int pton = 0;
 			for (std::size_t j = 1; j < edges[i].size(); j++) {
-				if (checkpt(edges[i][j]) && pton > 1) {
+				if (checkpt(edges[i][j]) && pton > 2) {
 					ClipperLib::Path tmp(edges[i].begin(), edges[i].begin() + j);
 					std::move(edges[i].begin() + j, edges[i].end(), edges[i].begin());
 					std::move(tmp.begin(), tmp.end(), edges[i].end() - j);
@@ -263,10 +264,10 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
     }
 
     long distance;
-    ClipperLib::IntPoint lastPoint = edges[0][1];
-    distance = std::pow(lastPoint.X - edges[1][0].X, 2);
-    distance += std::pow(lastPoint.Y - edges[1][0].Y, 2);
+    ClipperLib::IntPoint lastPoint = edges[0][0];
     for (std::size_t i = 1; i < edges.size() - 1; i++) {
+		distance = std::pow(lastPoint.X - edges[i][0].X, 2);
+		distance += std::pow(lastPoint.Y - edges[i][0].Y, 2);
         for (std::size_t j = i + 1; j < edges.size(); j++) {
             long newdist = std::pow(lastPoint.X - edges[j][0].X, 2);
             newdist += std::pow(lastPoint.Y - edges[j][0].Y, 2);

@@ -41,12 +41,13 @@ class SliceProcessor {
     ClipperLib::Paths getEdges(const ClipperLib::Paths &paths,
                                const bool first_path) const;
     void optimizeInfill(ClipperLib::Paths &infill) const;
-	void optimizeEdges(ClipperLib::Paths &edges, std::size_t idx) const;
+    void optimizeEdges(ClipperLib::Paths &edges, std::size_t idx) const;
     /**
      * Get infill for region.
      */
     ClipperLib::Paths getInfill(const ClipperLib::Paths &edges) const;
-    ClipperLib::Paths getDenseInfill(const ClipperLib::Paths &edges, const bool direction) const;
+    ClipperLib::Paths getDenseInfill(const ClipperLib::Paths &edges,
+                                     const bool direction) const;
 
     /**
      * Get area that is covered, eroded and use that to compute the

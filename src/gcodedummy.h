@@ -6,10 +6,11 @@
 #include <string>
 #include <vector>
 
-const double area = M_PI * pow(0.2 / 2, 2) + 0.2 * (0.36 - 0.2);
+const double area = M_PI * pow(0.2 / 2, 2) + 0.2 * (0.36 - 0.2) / 1.75;
 const double extrusion_scale = 1.00;
 // const double retraction = (5 * area * extrusion_scale);
 const double retraction = 4;
+const double recover = 3.95;
 
 void startcode(std::ofstream &o) {
     o << "M190 S50\n";
@@ -51,9 +52,15 @@ void endcode(std::ofstream &o) {
       << "M84; stop stepper motors";
 }
 
-void gotoPoint(std::ofstream &o, QPoint &p, double z) {
-    o << "G0 F5000 X" << std::to_string(p.x() / 1000.0f) << " Y"
-      << std::to_string(p.y() / 1000.0f) << " Z" << std::to_string(z) << "\n";
+void gotoPoint(std::ofstream &o, QPoint &p, double z = -1) {
+    if (z > 0) {
+        o << "G0 F5000 X" << std::to_string(p.x() / 1000.0f) << " Y"
+          << std::to_string(p.y() / 1000.0f) << " Z" << std::to_string(z)
+          << "\n";
+    } else {
+        o << "G0 F5000 X" << std::to_string(p.x() / 1000.0f) << " Y"
+          << std::to_string(p.y() / 1000.0f) << "\n";
+    }
 }
 
 double distance(const QPoint &from, const QPoint &to) {
@@ -68,24 +75,24 @@ void printLine(std::ofstream &o, QPoint &from, QPoint &to, double &extrusion,
     // extrusion += (4 * 0.2 * 0.95 * length) / (M_PI * 0.4);
     double length = distance(from, to);
     if (coast) {
-        if (length <= 0.4) { // Don't extrude on last part
+        if (length <= 0.8) { // Don't extrude on last part
                              // Test: just do nothing
-                             /*
-                 o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
-                   << std::to_string(to.y() / 100.0f) << "\n";
-                             */
-        } else {             // extrude only beginning of line
-                             // Test: just go to almost the beginning
-            extrusion += ((length - 0.4) * area * extrusion_scale) / 1.75;
-            const double coastscale = length / (length - 0.4);
+            o << "X" << std::to_string(to.x() / 1000.0f) << " Y"
+              << std::to_string(to.y() / 1000.0f) << "\n";
+        } else { // extrude only beginning of line
+                 // Test: just go to almost the beginning
+            extrusion += ((length - 0.8) * area * extrusion_scale);
+            const double coastscale = length / (length - 0.8);
             double coastX;
             double coastY;
             coastX = ((to.x() - from.x()) / 1000.0f) / coastscale;
             coastY = ((to.y() - from.y()) / 1000.0f) / coastscale;
             // o << "; Coasting\n";
-            o << "G1 X" << std::to_string((from.x() / 1000.0f) + coastX) << " Y"
+            o << "X" << std::to_string((from.x() / 1000.0f) + coastX) << " Y"
               << std::to_string((from.y() / 1000.0f) + coastY) << " E"
               << std::to_string(extrusion) << "\n";
+            o << "G0 X" << std::to_string(to.x() / 1000.0f) << " Y"
+              << std::to_string(to.y() / 1000.0f) << "\n";
             /*
 o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
   << std::to_string(to.y() / 100.0f) << "\n";
@@ -93,41 +100,50 @@ o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
         }
     } else {
         if (offset) {
-            if (length <= 0.5)
-                length *= 0.8;
+            if (length <= 0.2)
+                length *= 0.30;
+            else if (length <= 0.4)
+                length *= 0.55;
+            else if (length <= 0.6)
+                length *= 0.85;
             else
                 length -= 0.2;
         }
-        extrusion += (length * area * extrusion_scale) / 1.75;
-        o << "G1 X" << std::to_string(to.x() / 1000.0f) << " Y"
+        extrusion += (length * area * extrusion_scale);
+        o << "X" << std::to_string(to.x() / 1000.0f) << " Y"
           << std::to_string(to.y() / 1000.0f) << " E"
           << std::to_string(extrusion) << "\n";
     }
 }
 
-QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion, double z) {
+QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion,
+                 double z) {
     QPoint p = poly[0];
     if (z < 0.4) {
-        o << "G1 F1300\n";
+        o << "G1 F1300 ";
     } else {
         if (poly.size() > 2)
-            o << "G1 F1800\n";
+            o << "G1 F1800 ";
         else
-            o << "G1 F3400\n"; // Infill can be faster
+            o << "G1 F3400 "; // Infill can be faster
     }
-	bool offset = poly.size() > 2;
+    bool offset = poly.size() > 2;
     // for (auto &pt : poly) {
-	for (int i = 1; i < poly.size(); i++) {
-		auto pt = poly[i];
+    for (int i = 1; i < poly.size(); i++) {
+        auto pt = poly[i];
         printLine(o, p, pt, extrusion, false, offset);
         p = pt;
+        if (i < (poly.size() - 1)) {
+            o << "G1 ";
+        }
     }
     if (poly.size() > 2) {
+        o << "G1 ";
         printLine(o, p, poly[0], extrusion, true);
-		return poly[0];
+        return poly[0];
     } else {
-		return p;
-	}
+        return p;
+    }
 
     // o << "G1 F2700 E" << std::to_string(extrusion - retraction) << "\n";
 }
@@ -135,12 +151,13 @@ QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion, double z) 
 void exportSlices(std::vector<std::vector<QPolygon>> &slices) {
     std::cout << "Retraction: " << std::to_string(retraction) << std::endl;
     std::ofstream o("test.gcode");
-    double extrusion = 0;
+    double extrusion = -retraction;
     startcode(o);
     double z = 0.2;
     // for (auto &slice : slices) {
-	for (std::size_t s = 0; s < slices.size(); s++) {
-		auto slice = slices[s];
+    bool retracted = true;
+    for (std::size_t s = 0; s < slices.size(); s++) {
+        auto slice = slices[s];
         o << "; Layer: " << std::to_string(z) << "\n";
         if (z > 0.3 && z < 0.5)
             o << "M106 S85\n";
@@ -149,18 +166,21 @@ void exportSlices(std::vector<std::vector<QPolygon>> &slices) {
         if (z > 0.7 && z < 0.9)
             o << "M106 S256\n";
         // Go to start quickly
-        bool retracted = true;
         for (std::size_t i = 0; i < slice.size(); i++) {
             QPoint p = slice[i][0];
             QPoint nextp(0, 0);
             if (i < (slice.size() - 1)) {
                 nextp = slice[i + 1][0];
             } else if (s < (slices.size() - 1)) {
-				nextp = slices[s][0][0];
-			}
-            gotoPoint(o, p, z);
+                nextp = slices[s][0][0];
+            }
+            if (i == 0)
+                gotoPoint(o, p, z);
+            else
+                gotoPoint(o, p);
             if (retracted) {
                 // o << "G1 F2700 E" << std::to_string(extrusion) << "\n";
+                extrusion += recover;
                 o << "G1 F2700 E" << extrusion << "\n";
                 retracted = false;
             }
@@ -169,8 +189,8 @@ void exportSlices(std::vector<std::vector<QPolygon>> &slices) {
             //   << std::to_string(distance(nextp, slice[i].last())) << "\n";
             if (distance(nextp, end) > 1.3) {
                 // No retraction if very close
-                o << "G1 F2700 E" << std::to_string(extrusion - retraction)
-                  << "\n";
+                extrusion -= retraction;
+                o << "G1 F2700 E" << std::to_string(extrusion) << "\n";
                 retracted = true;
             }
         }
