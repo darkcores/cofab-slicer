@@ -7,10 +7,10 @@
 #include <vector>
 
 const double area = M_PI * pow(0.2 / 2, 2) + 0.2 * (0.36 - 0.2) / 1.75;
-const double extrusion_scale = 1.00;
+const double extrusion_scale = 1.05;
 // const double retraction = (5 * area * extrusion_scale);
 const double retraction = 4;
-const double recover = 3.95;
+const double recover = 3.99;
 
 void startcode(std::ofstream &o) {
     o << "M190 S50\n";
@@ -70,19 +70,29 @@ double distance(const QPoint &from, const QPoint &to) {
     return length;
 }
 
-void printLine(std::ofstream &o, QPoint &from, QPoint &to, double &extrusion,
+double polyLength(const QPolygon &poly) {
+	QPoint previous = poly[0];
+	double len = 0;
+	for (int i = 1; i < poly.size(); i++) {
+		len += distance(previous, poly[i]);
+		previous = poly[i];
+	}
+	return len;
+}
+
+double printLine(std::ofstream &o, QPoint &from, QPoint &to, double &extrusion,
                bool coast = false, double offset = true) {
     // extrusion += (4 * 0.2 * 0.95 * length) / (M_PI * 0.4);
     double length = distance(from, to);
     if (coast) {
-        if (length <= 0.8) { // Don't extrude on last part
+        if (length <= 1.4) { // Don't extrude on last part
                              // Test: just do nothing
             o << "X" << std::to_string(to.x() / 1000.0f) << " Y"
               << std::to_string(to.y() / 1000.0f) << "\n";
         } else { // extrude only beginning of line
                  // Test: just go to almost the beginning
-            extrusion += ((length - 0.8) * area * extrusion_scale);
-            const double coastscale = length / (length - 0.8);
+            extrusion += ((length - 1.4) * area * extrusion_scale);
+            const double coastscale = length / (length - 1.4);
             double coastX;
             double coastY;
             coastX = ((to.x() - from.x()) / 1000.0f) / coastscale;
@@ -91,7 +101,7 @@ void printLine(std::ofstream &o, QPoint &from, QPoint &to, double &extrusion,
             o << "X" << std::to_string((from.x() / 1000.0f) + coastX) << " Y"
               << std::to_string((from.y() / 1000.0f) + coastY) << " E"
               << std::to_string(extrusion) << "\n";
-            o << "G0 X" << std::to_string(to.x() / 1000.0f) << " Y"
+            o << "G1 X" << std::to_string(to.x() / 1000.0f) << " Y"
               << std::to_string(to.y() / 1000.0f) << "\n";
             /*
 o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
@@ -101,7 +111,7 @@ o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
     } else {
         if (offset) {
             if (length <= 0.2)
-                length *= 0.30;
+                length *= 0.32;
             else if (length <= 0.4)
                 length *= 0.55;
             else if (length <= 0.6)
@@ -114,11 +124,13 @@ o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
           << std::to_string(to.y() / 1000.0f) << " E"
           << std::to_string(extrusion) << "\n";
     }
+	return length;
 }
 
 QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion,
                  double z) {
     QPoint p = poly[0];
+	double length = polyLength(poly);
     if (z < 0.4) {
         o << "G1 F1300 ";
     } else {
@@ -131,7 +143,13 @@ QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion,
     // for (auto &pt : poly) {
     for (int i = 1; i < poly.size(); i++) {
         auto pt = poly[i];
-        printLine(o, p, pt, extrusion, false, offset);
+		if (length <= 1.4 && offset) {
+			double l = printLine(o, p, pt, extrusion, true);
+			length -= l;
+		} else {
+			double l = printLine(o, p, pt, extrusion, false, offset);
+			length -= l;
+		}
         p = pt;
         if (i < (poly.size() - 1)) {
             o << "G1 ";

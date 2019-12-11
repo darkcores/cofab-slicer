@@ -60,15 +60,16 @@ SliceProcessor::processSlice(const ClipperLib::Paths &clippedpaths,
 
     ClipperLib::Paths processed;
     auto edges = getEdges(clippedpaths, true);
+	ClipperLib::CleanPolygons(edges);
     processed.insert(processed.end(), edges.begin(), edges.end());
     for (unsigned int i = 1; i < num_walls; i++) {
-        ClipperLib::CleanPolygons(edges);
         edges = getEdges(edges, false);
+        ClipperLib::CleanPolygons(edges);
         processed.insert(processed.end(), edges.begin(), edges.end());
     }
     optimizeEdges(processed, idx);
-    ClipperLib::CleanPolygons(edges);
 	edges = getEdges(edges, true);
+    ClipperLib::CleanPolygons(edges);
 
     auto dense = getDenseArea(edges, idx);
     // processed = dense;
@@ -220,10 +221,10 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
         ClipperLib::Path p;
         ClipperLib::Paths ps;
         // p << pt;
-        p << ClipperLib::IntPoint(pt.X - 2, pt.Y - 2);
-        p << ClipperLib::IntPoint(pt.X + 2, pt.Y - 2);
-        p << ClipperLib::IntPoint(pt.X + 2, pt.Y + 2);
-        p << ClipperLib::IntPoint(pt.X - 2, pt.Y + 2);
+        p << ClipperLib::IntPoint(pt.X - 1, pt.Y - 1);
+        p << ClipperLib::IntPoint(pt.X + 1, pt.Y - 1);
+        p << ClipperLib::IntPoint(pt.X + 1, pt.Y + 1);
+        p << ClipperLib::IntPoint(pt.X - 1, pt.Y + 1);
         clippt.AddPath(p, ClipperLib::PolyType::ptSubject, true);
         clippt.AddPaths(clipped_slices[idx - 1], ClipperLib::PolyType::ptClip,
                         true);
