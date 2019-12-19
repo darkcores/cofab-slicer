@@ -1,5 +1,4 @@
 #include "mainwindow.h"
-#include "gcodedummy.h"
 #include "gcodegenerator.h"
 #include "model3d.h"
 #include "sliceprocessor.h"
@@ -89,9 +88,9 @@ void MainWindow::loadFile(QUrl file) {
         }
     }
 
-    // GCodeGenerator g;
+	GCodeGenerator g("test.gcode");
     // g.generateGcode(clipped, "test.gcode");
-    exportSlices(clipped);
+    g.exportSlices(clipped);
 }
 
 void MainWindow::exportGcode() {}
