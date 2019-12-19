@@ -2,13 +2,14 @@
 #include "slicewidget.h"
 
 #include <QCheckBox>
+#include <QColorDialog>
 #include <QHBoxLayout>
+#include <QLabel>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QPen>
 #include <QPushButton>
 #include <QRandomGenerator>
-#include <QColorDialog>
 #include <QTimer>
 
 SliceViewer::SliceViewer(QWidget *parent) : QDockWidget(parent) {
@@ -55,6 +56,12 @@ SliceViewer::SliceViewer(QWidget *parent) : QDockWidget(parent) {
     connect(resetBtn, &QPushButton::clicked, this, &SliceViewer::reset);
     controls->addWidget(resetBtn);
 
+    layerLbl = new QLabel(QString::number(currentSlice));
+	controls->QLayout::addWidget(layerLbl);
+
+	layerTotalLbl = new QLabel("/ 0");
+	controls->addWidget(layerTotalLbl);
+
     auto controlWidget = new QWidget(this);
     controlWidget->setLayout(controls);
     layout->addWidget(controlWidget);
@@ -67,6 +74,8 @@ SliceViewer::SliceViewer(QWidget *parent) : QDockWidget(parent) {
 void SliceViewer::setSlices(std::vector<std::vector<QPolygon>> slices) {
     this->slices = slices;
     currentSlice = 0;
+    layerLbl->setText(QString::number(currentSlice));
+	layerTotalLbl->setText(QString("/ ") + QString::number(slices.size()));
     if (this->slices.size() > 0) {
         slice->setSlice(this->slices[currentSlice]);
     }
@@ -75,6 +84,7 @@ void SliceViewer::setSlices(std::vector<std::vector<QPolygon>> slices) {
 void SliceViewer::nextSlice() {
     if (currentSlice + 1 < slices.size()) {
         currentSlice++;
+        layerLbl->setText(QString::number(currentSlice));
         slice->setSlice(this->slices[currentSlice]);
     }
 }
@@ -82,6 +92,7 @@ void SliceViewer::nextSlice() {
 void SliceViewer::prevSlice() {
     if (currentSlice > 0) {
         currentSlice--;
+        layerLbl->setText(QString::number(currentSlice));
         slice->setSlice(this->slices[currentSlice]);
     }
 }
@@ -89,20 +100,22 @@ void SliceViewer::prevSlice() {
 void SliceViewer::randColorToggle(bool value) { slice->setRandomColor(value); }
 
 void SliceViewer::changeColor() {
-	randColorBtn->setChecked(false);
+    randColorBtn->setChecked(false);
     auto newColor = QColorDialog::getColor(slice->getColor(), this);
-	slice->setColor(newColor);
+    slice->setColor(newColor);
 }
 
 void SliceViewer::play() {
     if (currentSlice + 1 < slices.size()) {
         currentSlice++;
+        layerLbl->setText(QString::number(currentSlice));
         slice->setSlice(this->slices[currentSlice]);
-		QTimer::singleShot(175, this, SLOT(play()));
+        QTimer::singleShot(175, this, SLOT(play()));
     }
 }
 
 void SliceViewer::reset() {
-	currentSlice = 0;
-	slice->setSlice(this->slices[currentSlice]);
+    currentSlice = 0;
+    slice->setSlice(this->slices[currentSlice]);
+    layerLbl->setText(QString::number(currentSlice));
 }
