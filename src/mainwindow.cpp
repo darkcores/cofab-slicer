@@ -74,7 +74,7 @@ void MainWindow::loadFile(QUrl file) {
     auto bounds = model->getBounds();
     // gcodeViewer->setSlice(slice);
     SliceProcessor sp(bounds);
-    auto clipped = sp.process(slices);
+    clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
 
     // move to center of the bed
@@ -87,12 +87,14 @@ void MainWindow::loadFile(QUrl file) {
             }
         }
     }
+}
 
-	GCodeGenerator g("test.gcode");
+void MainWindow::exportGcode() {
+    auto fileName = QFileDialog::getSaveFileName(
+        this, tr("Save GCODE"), "out.gcode", tr("GCODE (*.gcode)"));
+    GCodeGenerator g(fileName.toStdString());
     // g.generateGcode(clipped, "test.gcode");
     g.exportSlices(clipped);
 }
-
-void MainWindow::exportGcode() {}
 
 void MainWindow::quit() { QApplication::quit(); }

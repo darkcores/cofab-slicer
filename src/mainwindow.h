@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QPolygon>
+#include <vector>
 
 class SlicerOptions;
 class STLViewer;
@@ -28,6 +30,8 @@ class MainWindow : public QMainWindow {
 
     void setupMenu();
     void setupDocks();
+
+    std::vector<std::vector<QPolygon>> clipped;
 
   private slots:
     void openFile();
