@@ -28,8 +28,9 @@ class SliceProcessor {
     const QRect bounds;
     unsigned int num_walls = 2; // Min 1
     unsigned int num_rf = 2;    // Num roofs / floors
-    int infill_offset = 15;
-    const long nozzle_offset = -0.4 * 1000;
+    const int infill_offset = 15;
+	const int wall_width = 0.3771 * 1000; // extrusion width - layerheight * (1-pi/4)
+    const long nozzle_offset = -wall_width;
     std::vector<ClipperLib::Paths> clipped_slices;
 
     /**

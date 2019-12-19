@@ -134,7 +134,7 @@ SliceProcessor::getInfill(const ClipperLib::Paths &edges) const {
     const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt(pow(2 * (0.4 * 1000), 2) / 2) * infill_offset;
+    const long incr = std::sqrt(pow(2 * wall_width, 2) / 2) * infill_offset;
     lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
     ClipperLib::Path line(2);
@@ -182,7 +182,7 @@ ClipperLib::Paths SliceProcessor::getDenseInfill(const ClipperLib::Paths &edges,
     const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt(pow(2 * (0.4 * 1000), 2) / 2);
+    const long incr = std::sqrt(pow(2 * wall_width, 2) / 2); // lines closer to eachother
     lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
     ClipperLib::Path line(2);

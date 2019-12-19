@@ -1,20 +1,31 @@
 #include <QPoint>
 #include <QPolygon>
+#include <QVector2D>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
 
-const double area = M_PI * pow(0.2 / 2, 2) + 0.2 * (0.36 - 0.2) / 1.75;
+// const double area = M_PI * pow(0.2 / 2, 2) + 0.2 * (0.36 - 0.2) / (M_PI / 4 *
+// pow(1.75, 2));
 const double extrusion_scale = 1.05;
+// const double A = ((0.4 - 0.2) * 0.2) + (M_PI * pow(0.2 / 2, 2));
+// const double area = (A * 4) / (M_PI * pow(1.75, 2));
+// Fun stuff: https://manual.slic3r.org/advanced/flow-math
+// Modified from there
+const double areaLine = ((0.2 * (0.42 - 0.2)) + (M_PI * pow(0.2 / 2, 2))) /
+                        (M_PI * pow(1.75 / 2, 2));
+// const double areaInfill = (M_PI * pow(0.4 / 2, 2)) / (M_PI * pow(1.75 / 2, 2));
+const double areaInfill = areaLine * 1.5;
+double area = areaLine;
 // const double retraction = (5 * area * extrusion_scale);
 const double retraction = 4;
-const double recover = 3.99;
+const double recover = 3.999;
 
 void startcode(std::ofstream &o) {
-    o << "M190 S50\n";
-    o << "M109 S200\n";
+    o << "M190 S55\n";
+    o << "M109 S203\n";
     o << "M106 S0\n";
     o << "G21 ;metricvalues\n";
     o << "M201 X500.00 Y500.00 Z100.00 E5000.00 ;Setup machine max "
@@ -64,34 +75,35 @@ void gotoPoint(std::ofstream &o, QPoint &p, double z = -1) {
 }
 
 double distance(const QPoint &from, const QPoint &to) {
-    const double diffX = (from.x() / 1000.0f) - (to.x() / 1000.0f);
-    const double diffY = (from.y() / 1000.0f) - (to.y() / 1000.0f);
-    const double length = sqrt(pow(diffX, 2) + pow(diffY, 2));
+    // const double diffX = (from.x() / 1000.0f) - (to.x() / 1000.0f);
+    // const double diffY = (from.y() / 1000.0f) - (to.y() / 1000.0f);
+    // const double length = sqrt(pow(diffX, 2) + pow(diffY, 2));
+    const double length = QVector2D(to - from).length() / 1000;
     return length;
 }
 
 double polyLength(const QPolygon &poly) {
-	QPoint previous = poly[0];
-	double len = 0;
-	for (int i = 1; i < poly.size(); i++) {
-		len += distance(previous, poly[i]);
-		previous = poly[i];
-	}
-	return len;
+    QPoint previous = poly[0];
+    double len = 0;
+    for (int i = 1; i < poly.size(); i++) {
+        len += distance(previous, poly[i]);
+        previous = poly[i];
+    }
+    return len;
 }
 
 double printLine(std::ofstream &o, QPoint &from, QPoint &to, double &extrusion,
-               bool coast = false, double offset = true) {
+                 bool coast = false, double offset = 0) {
     // extrusion += (4 * 0.2 * 0.95 * length) / (M_PI * 0.4);
     double length = distance(from, to);
     if (coast) {
-        if (length <= 1.4) { // Don't extrude on last part
+        if (length <= 0.4) { // Don't extrude on last part
                              // Test: just do nothing
             o << "X" << std::to_string(to.x() / 1000.0f) << " Y"
               << std::to_string(to.y() / 1000.0f) << "\n";
         } else { // extrude only beginning of line
                  // Test: just go to almost the beginning
-            extrusion += ((length - 1.4) * area * extrusion_scale);
+            extrusion += ((length - 0.8) * area * extrusion_scale);
             const double coastscale = length / (length - 1.4);
             double coastX;
             double coastY;
@@ -109,47 +121,68 @@ o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
             */
         }
     } else {
-        if (offset) {
-            if (length <= 0.2)
-                length *= 0.32;
-            else if (length <= 0.4)
-                length *= 0.55;
-            else if (length <= 0.6)
-                length *= 0.85;
-            else
-                length -= 0.2;
+        if (offset > 0) {
+            length -= std::min((3 * (1 - offset)), (length * (1 - offset)));
+            /*
+if (length <= 0.2)
+    length *= 0.35;
+else if (length <= 0.4)
+    length *= 0.65;
+else if (length <= 0.6)
+    length *= 0.90;
+else
+    length -= 0.2;
+            */
         }
         extrusion += (length * area * extrusion_scale);
         o << "X" << std::to_string(to.x() / 1000.0f) << " Y"
           << std::to_string(to.y() / 1000.0f) << " E"
           << std::to_string(extrusion) << "\n";
     }
-	return length;
+    return length;
+}
+
+float getAngle(const QPoint p, const QPoint last, const QPoint next) {
+    if (last == QPoint(0, 0) || next == QPoint(0, 0)) {
+        return 0;
+    }
+    QVector2D v1(p - last), v2(p - next);
+    float dot = QVector2D::dotProduct(v1, v2);
+    float angle = dot / (v1.length() * v2.length());
+    return angle;
 }
 
 QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion,
                  double z) {
-    QPoint p = poly[0];
-	double length = polyLength(poly);
+    QPoint p = poly[0], prevp(0, 0);
+    double length = polyLength(poly);
     if (z < 0.4) {
         o << "G1 F1300 ";
     } else {
         if (poly.size() > 2)
             o << "G1 F1800 ";
         else
-            o << "G1 F3400 "; // Infill can be faster
+            o << "G1 F2400 "; // Infill can be faster
+                              // TODO split infill & floors/roofs
     }
     bool offset = poly.size() > 2;
+    if (offset) {
+        area = areaLine;
+    } else {
+        area = areaInfill;
+    }
     // for (auto &pt : poly) {
     for (int i = 1; i < poly.size(); i++) {
         auto pt = poly[i];
-		if (length <= 1.4 && offset) {
-			double l = printLine(o, p, pt, extrusion, true);
-			length -= l;
-		} else {
-			double l = printLine(o, p, pt, extrusion, false, offset);
-			length -= l;
-		}
+        auto angle = getAngle(p, prevp, pt);
+        if (length <= 0.4 && offset) {
+            double l = printLine(o, p, pt, extrusion, true);
+            length -= l;
+        } else {
+            double l = printLine(o, p, pt, extrusion, false, angle);
+            length -= l;
+        }
+        prevp = pt;
         p = pt;
         if (i < (poly.size() - 1)) {
             o << "G1 ";
@@ -167,6 +200,12 @@ QPoint printPath(std::ofstream &o, QPolygon &poly, double &extrusion,
 }
 
 void exportSlices(std::vector<std::vector<QPolygon>> &slices) {
+    /*
+    float testangle = getAngle(QPoint(1, 1), QPoint(0, 1), QPoint(-1, 2));
+    std::cout << "Angle test value: " << testangle << std::endl;
+    */
+    std::cout << "Area line: " << areaLine << " Area infill: " << areaInfill
+              << std::endl;
     std::cout << "Retraction: " << std::to_string(retraction) << std::endl;
     std::ofstream o("test.gcode");
     double extrusion = -retraction;
