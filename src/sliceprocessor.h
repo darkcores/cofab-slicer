@@ -37,6 +37,9 @@ class SliceProcessor {
     const long nozzle_offset = -wall_width;
     std::vector<ClipperLib::Paths> clipped_slices;
 
+    void addSupport(std::vector<std::vector<QPolygon>> &processed);
+    ClipperLib::Paths getOffsetEdges(const ClipperLib::Paths &paths, const int offset) const ;
+
     /**
      * Clip QPolygons to paths (Xor).
      */

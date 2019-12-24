@@ -7,6 +7,65 @@
 
 SliceProcessor::SliceProcessor(const QRect bounds) : bounds(bounds) {}
 
+void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed){
+  //get slice difference with the last one
+  //start from top of the model to bottom
+  if(clipped_slices.size() < 2){
+    return;
+  }
+
+  auto j = clipped_slices.size()-1;
+
+  for (auto i = clipped_slices.size() - 2; i --> 0;) {
+        //std::cout << "layer " << i << ": "<< clipped_slices.at(i) << std::endl;
+        //difference between layers
+        int offset = -0.2 * 1000;
+        ClipperLib::Clipper differenceLayers;
+        ClipperLib::Paths diff;
+
+        differenceLayers.AddPaths(clipped_slices[j], ClipperLib::PolyType::ptSubject, true);
+        differenceLayers.AddPaths(clipped_slices[i],ClipperLib::ptClip, true);
+        differenceLayers.Execute(ClipperLib::ClipType::ctDifference, diff);
+
+        //std::cout << "diff: " << diff << std::endl;
+        //offset the edges: because the vertices of a triangle with 90°,45°, 45° angles are the same length
+        ClipperLib::CleanPolygons(diff);
+        ClipperLib::Paths smaller = getOffsetEdges(diff, offset);
+
+
+        if(diff.size() > 0 && smaller.size() > 0){
+          std::cout<<"adding support at layer " << i <<std::endl;
+          //add support structure (smaller)
+          //auto infill = getInfill(diff);
+          //optimizeInfill(infill);
+          //std::cout << "infill : " << infill << std::endl;
+
+          //union with current layer
+          ClipperLib::Clipper unionclip;
+          unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptSubject, true);
+          unionclip.AddPaths(diff, ClipperLib::PolyType::ptClip, true);
+          unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
+                            ClipperLib::PolyFillType::pftPositive,
+                            ClipperLib::PolyFillType::pftPositive);
+
+          //clipped_slices[i].insert(clipped_slices[i].end(), infill.begin(), infill.end());
+          //clipped_slices[i] = infill;
+          processed[i] = processSlice(clipped_slices[i], i);
+          //update last layer
+        }
+        j--;
+  }
+}
+
+ClipperLib::Paths SliceProcessor::getOffsetEdges(const ClipperLib::Paths &paths, const int offset) const {
+    ClipperLib::Paths newpaths;
+    ClipperLib::ClipperOffset co;
+    co.AddPaths(paths, ClipperLib::JoinType::jtRound,
+                ClipperLib::EndType::etClosedPolygon);
+    co.Execute(newpaths, offset);
+    return newpaths;
+}
+
 std::vector<std::vector<QPolygon>>
 SliceProcessor::process(const std::vector<std::vector<QPolygon>> &paths) {
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -26,6 +85,11 @@ SliceProcessor::process(const std::vector<std::vector<QPolygon>> &paths) {
         auto slice = processSlice(clipped_slices[i], i);
         processed[i] = slice;
     }
+
+
+    std::cout << "add support" << std::endl;
+    //addSupport
+    addSupport(processed);
 
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration =
