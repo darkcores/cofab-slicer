@@ -29,6 +29,18 @@ QWidget *SlicerOptions::slicerSettings() {
     layout->addRow(tr("Retraction speed"), new QLineEdit(this));
     layout->addRow(tr("Retraction distance"), new QLineEdit(this));
 
+	infillBox = new QSpinBox();
+	infillBox->setValue(15);
+	layout->addRow(tr("Infill spacing"), infillBox);
+
+	wallsBox = new QSpinBox();
+	wallsBox->setValue(2);
+	layout->addRow(tr("Walls"), wallsBox);
+
+	floorroofBox = new QSpinBox();
+	floorroofBox->setValue(2);
+	layout->addRow(tr("Floors / Roofs"), floorroofBox);
+
 	return w;
 }
 

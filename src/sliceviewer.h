@@ -6,6 +6,7 @@
 
 class SliceWidget;
 class QCheckBox;
+class QLabel;
 
 /**
  * Viewer for sliced paths.
@@ -18,6 +19,7 @@ class SliceViewer : public QDockWidget {
 
   private:
 	QCheckBox *randColorBtn;
+	QLabel *layerLbl, *layerTotalLbl;
 	std::vector<std::vector<QPolygon>> slices;
 	std::size_t currentSlice;
 	SliceWidget *slice;

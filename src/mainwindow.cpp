@@ -74,6 +74,9 @@ void MainWindow::loadFile(QUrl file) {
     auto bounds = model->getBounds();
     // gcodeViewer->setSlice(slice);
     SliceProcessor sp(bounds);
+	sp.setWalls(slicerOptions->walls());
+	sp.setRoofsFloors(slicerOptions->floorroof());
+	sp.setInfillSpacing(slicerOptions->infill());
     clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
 
