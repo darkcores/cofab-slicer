@@ -38,6 +38,8 @@ class SliceProcessor {
     std::vector<ClipperLib::Paths> clipped_slices;
 
     void addSupport(std::vector<std::vector<QPolygon>> &processed);
+    ClipperLib::Paths getGrid(const int gridSpace, const ClipperLib::Paths diff);
+
     ClipperLib::Paths getOffsetEdges(const ClipperLib::Paths &paths, const int offset) const ;
 
     /**

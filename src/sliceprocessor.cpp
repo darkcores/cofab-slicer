@@ -40,21 +40,80 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed){
           //optimizeInfill(infill);
           //std::cout << "infill : " << infill << std::endl;
 
-          //union with current layer
-          ClipperLib::Clipper unionclip;
-          unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptSubject, true);
-          unionclip.AddPaths(diff, ClipperLib::PolyType::ptClip, true);
-          unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
-                            ClipperLib::PolyFillType::pftPositive,
-                            ClipperLib::PolyFillType::pftPositive);
+          /*
+          //create easy to break support grid
+          ClipperLib::Paths grid = getGrid(50, diff);
+          ClipperLib::PolyTree solution;
+          ClipperLib::Clipper c;
+          c.AddPaths(grid, ClipperLib::PolyType::ptSubject, false); //ie paths NOT closed
+          c.AddPaths(diff, ClipperLib::PolyType::ptClip, true); //nb: clip paths MUST be closed
+          c.Execute(ClipperLib::ClipType::ctIntersection,
+              solution, ClipperLib::PolyFillType::pftEvenOdd, ClipperLib::PolyFillType::pftPositive);
+          ClipperLib::Paths clippedGrids;
+          ClipperLib::PolyTreeToPaths(solution, clippedGrids);
+          */
 
-          //clipped_slices[i].insert(clipped_slices[i].end(), infill.begin(), infill.end());
+          //std::cout<<clippedGrids<<std::endl;
+
+          //union with current layer and the smaller section
+          ClipperLib::Clipper unionclip;
+          ClipperLib::Paths sol;
+          unionclip.AddPaths(smaller, ClipperLib::PolyType::ptSubject, true);
+          unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip, true);
+          unionclip.Execute(ClipperLib::ClipType::ctUnion, sol, ClipperLib::PolyFillType::pftNonZero, ClipperLib::PolyFillType::pftNonZero);
+
+
+
+
+          unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
+          unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip, true);
+          unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
+                            ClipperLib::PolyFillType::pftNonZero,
+                            ClipperLib::PolyFillType::pftNonZero);
+
+          //clipped_slices[i].insert(clipped_slices[i].end(), clippedGrids);
           //clipped_slices[i] = infill;
-          processed[i] = processSlice(clipped_slices[i], i);
+
+          processed[i] = processSlice(sol, i);
           //update last layer
         }
         j--;
   }
+}
+
+ClipperLib::Paths SliceProcessor::getGrid(const int gridSpace, const ClipperLib::Paths area){
+
+  ClipperLib::Paths grid;
+  ClipperLib::Clipper c;
+  for (auto &path : area) {
+    int minX = 0, maxX = 0;
+    int minY = 0, maxY = 0;
+    for(auto point : path){
+      if(point.X < minX) minX = point.X;
+      if(point.X > maxX) maxX = point.X;
+      if(point.Y < minY) minY = point.Y;
+      if(point.Y > maxY) maxY = point.Y;
+    }
+
+
+    //horizontal lines
+    for (int i = 0; i <= (maxX - minX)/gridSpace; i++){
+      ClipperLib::Path horizontaline = ClipperLib::Path(2);
+      horizontaline[0] =  ClipperLib::IntPoint(minX, maxX-minX + i * gridSpace);
+      horizontaline[1] = ClipperLib::IntPoint(maxX, maxX-minX + i * gridSpace);
+      grid.insert(grid.end(),horizontaline);
+    }
+
+    //vertical
+    for (int j = 0; j <= (maxY - minY)/gridSpace; j++){
+      ClipperLib::Path verticalline = ClipperLib::Path(2);
+      verticalline[0] = ClipperLib::IntPoint(maxY-minY + j * gridSpace, minY);
+      verticalline[1] = ClipperLib::IntPoint(maxY-minY + j * gridSpace, maxY);
+      grid.insert(grid.end(), verticalline);
+    }
+
+  }
+  return grid;
 }
 
 ClipperLib::Paths SliceProcessor::getOffsetEdges(const ClipperLib::Paths &paths, const int offset) const {
