@@ -36,45 +36,19 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed){
         if(diff.size() > 0 && smaller.size() > 0){
           std::cout<<"adding support at layer " << i <<std::endl;
           //add support structure (smaller)
-          //auto infill = getInfill(diff);
-          //optimizeInfill(infill);
-          //std::cout << "infill : " << infill << std::endl;
-
-          /*
-          //create easy to break support grid
-          ClipperLib::Paths grid = getGrid(50, diff);
-          ClipperLib::PolyTree solution;
-          ClipperLib::Clipper c;
-          c.AddPaths(grid, ClipperLib::PolyType::ptSubject, false); //ie paths NOT closed
-          c.AddPaths(diff, ClipperLib::PolyType::ptClip, true); //nb: clip paths MUST be closed
-          c.Execute(ClipperLib::ClipType::ctIntersection,
-              solution, ClipperLib::PolyFillType::pftEvenOdd, ClipperLib::PolyFillType::pftPositive);
-          ClipperLib::Paths clippedGrids;
-          ClipperLib::PolyTreeToPaths(solution, clippedGrids);
-          */
-
-          //std::cout<<clippedGrids<<std::endl;
-
           //union with current layer and the smaller section
           ClipperLib::Clipper unionclip;
-          ClipperLib::Paths sol;
+           ClipperLib::Paths sol;
           unionclip.AddPaths(smaller, ClipperLib::PolyType::ptSubject, true);
           unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip, true);
           unionclip.Execute(ClipperLib::ClipType::ctUnion, sol, ClipperLib::PolyFillType::pftNonZero, ClipperLib::PolyFillType::pftNonZero);
-
-
-
 
           unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
           unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip, true);
           unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
                             ClipperLib::PolyFillType::pftNonZero,
                             ClipperLib::PolyFillType::pftNonZero);
-
-          //clipped_slices[i].insert(clipped_slices[i].end(), clippedGrids);
-          //clipped_slices[i] = infill;
-
-          processed[i] = processSlice(sol, i);
+          processed[i] = processSlice(sol, j);
           //update last layer
         }
         j--;
@@ -183,7 +157,7 @@ SliceProcessor::processSlice(const ClipperLib::Paths &clippedpaths,
 
     ClipperLib::Paths processed;
     auto edges = getEdges(clippedpaths, true);
-	ClipperLib::CleanPolygons(edges);
+	  ClipperLib::CleanPolygons(edges);
     processed.insert(processed.end(), edges.begin(), edges.end());
     for (unsigned int i = 1; i < num_walls; i++) {
         edges = getEdges(edges, false);
@@ -191,7 +165,7 @@ SliceProcessor::processSlice(const ClipperLib::Paths &clippedpaths,
         processed.insert(processed.end(), edges.begin(), edges.end());
     }
     optimizeEdges(processed, idx);
-	edges = getEdges(edges, true);
+	  edges = getEdges(edges, true);
     ClipperLib::CleanPolygons(edges);
 
     auto dense = getDenseArea(edges, idx);
