@@ -7,90 +7,115 @@
 
 SliceProcessor::SliceProcessor(const QRect bounds) : bounds(bounds) {}
 
-void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed){
-  //get slice difference with the last one
-  //start from top of the model to bottom
-  if(clipped_slices.size() < 2){
-    return;
-  }
+void SliceProcessor::setNozzleWidth(double w) {
+    nozzleWidth = w;
+    wall_width = (nozzleWidth * 1.05) - (layerHeight * (1 - (M_PI / 4)));
+    nozzle_offset = -wall_width;
+}
 
-  auto j = clipped_slices.size()-1;
+void SliceProcessor::setLayerHeight(double h) {
+    layerHeight = h;
+    wall_width = (nozzleWidth * 1.05) - (layerHeight * (1 - (M_PI / 4)));
+    nozzle_offset = -wall_width;
+}
 
-  for (auto i = clipped_slices.size() - 2; i --> 0;) {
-        //std::cout << "layer " << i << ": "<< clipped_slices.at(i) << std::endl;
-        //difference between layers
-        int offset = -0.2 * 1000;
+void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
+    // get slice difference with the last one
+    // start from top of the model to bottom
+    if (clipped_slices.size() < 2) {
+        return;
+    }
+
+    auto j = clipped_slices.size() - 1;
+
+    for (auto i = clipped_slices.size() - 2; i-- > 0;) {
+        // std::cout << "layer " << i << ": "<< clipped_slices.at(i) <<
+        // std::endl; difference between layers
+        int offset = -layerHeight * 1000;
         ClipperLib::Clipper differenceLayers;
         ClipperLib::Paths diff;
 
-        differenceLayers.AddPaths(clipped_slices[j], ClipperLib::PolyType::ptSubject, true);
-        differenceLayers.AddPaths(clipped_slices[i],ClipperLib::ptClip, true);
+        differenceLayers.AddPaths(clipped_slices[j],
+                                  ClipperLib::PolyType::ptSubject, true);
+        differenceLayers.AddPaths(clipped_slices[i], ClipperLib::ptClip, true);
         differenceLayers.Execute(ClipperLib::ClipType::ctDifference, diff);
 
-        //std::cout << "diff: " << diff << std::endl;
-        //offset the edges: because the vertices of a triangle with 90°,45°, 45° angles are the same length
+        // std::cout << "diff: " << diff << std::endl;
+        // offset the edges: because the vertices of a triangle with 90°,45°,
+        // 45° angles are the same length
         ClipperLib::CleanPolygons(diff);
         ClipperLib::Paths smaller = getOffsetEdges(diff, offset);
 
+        if (diff.size() > 0 && smaller.size() > 0) {
+            std::cout << "adding support at layer " << i << std::endl;
+            // add support structure (smaller)
+            // union with current layer and the smaller section
+            ClipperLib::Clipper unionclip;
+            ClipperLib::Paths sol;
+            unionclip.AddPaths(smaller, ClipperLib::PolyType::ptSubject, true);
+            unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip,
+                               true);
+            unionclip.Execute(ClipperLib::ClipType::ctUnion, sol,
+                              ClipperLib::PolyFillType::pftNonZero,
+                              ClipperLib::PolyFillType::pftNonZero);
 
-        if(diff.size() > 0 && smaller.size() > 0){
-          std::cout<<"adding support at layer " << i <<std::endl;
-          //add support structure (smaller)
-          //union with current layer and the smaller section
-          ClipperLib::Clipper unionclip;
-           ClipperLib::Paths sol;
-          unionclip.AddPaths(smaller, ClipperLib::PolyType::ptSubject, true);
-          unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip, true);
-          unionclip.Execute(ClipperLib::ClipType::ctUnion, sol, ClipperLib::PolyFillType::pftNonZero, ClipperLib::PolyFillType::pftNonZero);
-
-          unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
-          unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip, true);
-          unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
-                            ClipperLib::PolyFillType::pftNonZero,
-                            ClipperLib::PolyFillType::pftNonZero);
-          processed[i] = processSlice(sol, j);
-          //update last layer
+            unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
+            unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip,
+                               true);
+            unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
+                              ClipperLib::PolyFillType::pftNonZero,
+                              ClipperLib::PolyFillType::pftNonZero);
+            processed[i] = processSlice(sol, j);
+            // update last layer
         }
         j--;
-  }
+    }
 }
 
-ClipperLib::Paths SliceProcessor::getGrid(const int gridSpace, const ClipperLib::Paths area){
+ClipperLib::Paths SliceProcessor::getGrid(const int gridSpace,
+                                          const ClipperLib::Paths area) {
 
-  ClipperLib::Paths grid;
-  ClipperLib::Clipper c;
-  for (auto &path : area) {
-    int minX = 0, maxX = 0;
-    int minY = 0, maxY = 0;
-    for(auto point : path){
-      if(point.X < minX) minX = point.X;
-      if(point.X > maxX) maxX = point.X;
-      if(point.Y < minY) minY = point.Y;
-      if(point.Y > maxY) maxY = point.Y;
+    ClipperLib::Paths grid;
+    ClipperLib::Clipper c;
+    for (auto &path : area) {
+        int minX = 0, maxX = 0;
+        int minY = 0, maxY = 0;
+        for (auto point : path) {
+            if (point.X < minX)
+                minX = point.X;
+            if (point.X > maxX)
+                maxX = point.X;
+            if (point.Y < minY)
+                minY = point.Y;
+            if (point.Y > maxY)
+                maxY = point.Y;
+        }
+
+        // horizontal lines
+        for (int i = 0; i <= (maxX - minX) / gridSpace; i++) {
+            ClipperLib::Path horizontaline = ClipperLib::Path(2);
+            horizontaline[0] =
+                ClipperLib::IntPoint(minX, maxX - minX + i * gridSpace);
+            horizontaline[1] =
+                ClipperLib::IntPoint(maxX, maxX - minX + i * gridSpace);
+            grid.insert(grid.end(), horizontaline);
+        }
+
+        // vertical
+        for (int j = 0; j <= (maxY - minY) / gridSpace; j++) {
+            ClipperLib::Path verticalline = ClipperLib::Path(2);
+            verticalline[0] =
+                ClipperLib::IntPoint(maxY - minY + j * gridSpace, minY);
+            verticalline[1] =
+                ClipperLib::IntPoint(maxY - minY + j * gridSpace, maxY);
+            grid.insert(grid.end(), verticalline);
+        }
     }
-
-
-    //horizontal lines
-    for (int i = 0; i <= (maxX - minX)/gridSpace; i++){
-      ClipperLib::Path horizontaline = ClipperLib::Path(2);
-      horizontaline[0] =  ClipperLib::IntPoint(minX, maxX-minX + i * gridSpace);
-      horizontaline[1] = ClipperLib::IntPoint(maxX, maxX-minX + i * gridSpace);
-      grid.insert(grid.end(),horizontaline);
-    }
-
-    //vertical
-    for (int j = 0; j <= (maxY - minY)/gridSpace; j++){
-      ClipperLib::Path verticalline = ClipperLib::Path(2);
-      verticalline[0] = ClipperLib::IntPoint(maxY-minY + j * gridSpace, minY);
-      verticalline[1] = ClipperLib::IntPoint(maxY-minY + j * gridSpace, maxY);
-      grid.insert(grid.end(), verticalline);
-    }
-
-  }
-  return grid;
+    return grid;
 }
 
-ClipperLib::Paths SliceProcessor::getOffsetEdges(const ClipperLib::Paths &paths, const int offset) const {
+ClipperLib::Paths SliceProcessor::getOffsetEdges(const ClipperLib::Paths &paths,
+                                                 const int offset) const {
     ClipperLib::Paths newpaths;
     ClipperLib::ClipperOffset co;
     co.AddPaths(paths, ClipperLib::JoinType::jtRound,
@@ -119,9 +144,8 @@ SliceProcessor::process(const std::vector<std::vector<QPolygon>> &paths) {
         processed[i] = slice;
     }
 
-
     std::cout << "add support" << std::endl;
-    //addSupport
+    // addSupport
     addSupport(processed);
 
     auto t2 = std::chrono::high_resolution_clock::now();
@@ -157,7 +181,7 @@ SliceProcessor::processSlice(const ClipperLib::Paths &clippedpaths,
 
     ClipperLib::Paths processed;
     auto edges = getEdges(clippedpaths, true);
-	  ClipperLib::CleanPolygons(edges);
+    ClipperLib::CleanPolygons(edges);
     processed.insert(processed.end(), edges.begin(), edges.end());
     for (unsigned int i = 1; i < num_walls; i++) {
         edges = getEdges(edges, false);
@@ -165,7 +189,7 @@ SliceProcessor::processSlice(const ClipperLib::Paths &clippedpaths,
         processed.insert(processed.end(), edges.begin(), edges.end());
     }
     optimizeEdges(processed, idx);
-	  edges = getEdges(edges, true);
+    edges = getEdges(edges, true);
     ClipperLib::CleanPolygons(edges);
 
     auto dense = getDenseArea(edges, idx);
@@ -279,7 +303,8 @@ ClipperLib::Paths SliceProcessor::getDenseInfill(const ClipperLib::Paths &edges,
     const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt(pow(2 * wall_width, 2) / 2); // lines closer to eachother
+    const long incr =
+        std::sqrt(pow(2 * wall_width, 2) / 2); // lines closer to eachother
     lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
     ClipperLib::Path line(2);
@@ -339,17 +364,19 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
             } else {
                 bad++;
             }
-			int pton = 0;
-			for (std::size_t j = 1; j < edges[i].size(); j++) {
-				if (checkpt(edges[i][j]) && pton > 2) {
-					ClipperLib::Path tmp(edges[i].begin(), edges[i].begin() + j);
-					std::move(edges[i].begin() + j, edges[i].end(), edges[i].begin());
-					std::move(tmp.begin(), tmp.end(), edges[i].end() - j);
-					moved++;
-					break;
-				}
-				pton++;
-			}
+            int pton = 0;
+            for (std::size_t j = 1; j < edges[i].size(); j++) {
+                if (checkpt(edges[i][j]) && pton > 2) {
+                    ClipperLib::Path tmp(edges[i].begin(),
+                                         edges[i].begin() + j);
+                    std::move(edges[i].begin() + j, edges[i].end(),
+                              edges[i].begin());
+                    std::move(tmp.begin(), tmp.end(), edges[i].end() - j);
+                    moved++;
+                    break;
+                }
+                pton++;
+            }
         }
         if (bad > 0) {
 #pragma omp critical
@@ -364,8 +391,8 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
     long distance;
     ClipperLib::IntPoint lastPoint = edges[0][0];
     for (std::size_t i = 1; i < edges.size() - 1; i++) {
-		distance = std::pow(lastPoint.X - edges[i][0].X, 2);
-		distance += std::pow(lastPoint.Y - edges[i][0].Y, 2);
+        distance = std::pow(lastPoint.X - edges[i][0].X, 2);
+        distance += std::pow(lastPoint.Y - edges[i][0].Y, 2);
         for (std::size_t j = i + 1; j < edges.size(); j++) {
             long newdist = std::pow(lastPoint.X - edges[j][0].X, 2);
             newdist += std::pow(lastPoint.Y - edges[j][0].Y, 2);

@@ -22,7 +22,13 @@ class SlicerOptions : public QDockWidget {
 	int bedY() { return bedYBox->value(); }
 	int wallSpeed() { return wallSpeedBox->value() * 60; }
 	int infillSpeed() { return infillSpeedBox->value() * 60; }
+	double coasting() { return coastingBox->value(); }
 	double extrusionMult() { return extrusionMultBox->value(); }
+	int retractSpeed() { return retractSpeedBox->value() * 60; }
+	double retractDistance() { return retractDistanceBox->value(); }
+	double retractRestore() { return retractRestoreBox->value(); }
+	double layerHeight() { return layerHeightBox->value(); }
+	double nozzleWidth() { return nozzleWidthBox->value(); }
 
   private:
     QWidget *objectSettings();
@@ -30,9 +36,11 @@ class SlicerOptions : public QDockWidget {
     QWidget *printerSettings();
 
     QSpinBox *infillBox, *wallsBox, *floorroofBox;
-    QDoubleSpinBox *extrusionMultBox;
+    QDoubleSpinBox *extrusionMultBox, *coastingBox;
     QSpinBox *nozzleTempBox, *bedTempBox, *bedXBox, *bedYBox;
-	QSpinBox *wallSpeedBox, *infillSpeedBox;
+	QSpinBox *wallSpeedBox, *infillSpeedBox, *retractSpeedBox;
+	QDoubleSpinBox *retractDistanceBox,  *retractRestoreBox;
+	QDoubleSpinBox *nozzleWidthBox, *layerHeightBox;
 
   signals:
 

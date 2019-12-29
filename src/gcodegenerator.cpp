@@ -11,7 +11,16 @@ GCodeGenerator::~GCodeGenerator() {
 
 void GCodeGenerator::setLayerHeight(const double height) {
     layerHeight = height;
-    areaLine = ((height * (0.42 - height)) + (M_PI * pow(height / 2, 2))) /
+    areaLine = ((height * ((nozzleWidth * 1.05) - height)) +
+                (M_PI * pow(height / 2, 2))) /
+               (M_PI * pow(1.75 / 2, 2));
+    areaInfill = areaLine * 1.5;
+}
+
+void GCodeGenerator::setNozzleWidth(double width) {
+    nozzleWidth = width;
+    areaLine = ((layerHeight * ((nozzleWidth * 1.05) - layerHeight)) +
+                (M_PI * pow(layerHeight / 2, 2))) /
                (M_PI * pow(1.75 / 2, 2));
     areaInfill = areaLine * 1.5;
 }
@@ -24,9 +33,21 @@ void GCodeGenerator::setExtrusionMultiplier(double scale) {
     extrusion_scale = scale;
 }
 
+void GCodeGenerator::setCoasting(double distance) {
+    coastingDistance = distance;
+}
+
 void GCodeGenerator::setWallSpeed(int speed) { wallSpeed = speed; }
 
 void GCodeGenerator::setInfillSpeed(int speed) { infillSpeed = speed; }
+
+void GCodeGenerator::setRetractSpeed(int speed) { retractSpeed = speed; }
+
+void GCodeGenerator::setRetractDistance(double distance) {
+    retraction = distance;
+}
+
+void GCodeGenerator::setRetractRestore(double distance) { recover = distance; }
 
 void GCodeGenerator::exportSlices(std::vector<std::vector<QPolygon>> &slices) {
     /*
@@ -67,7 +88,7 @@ void GCodeGenerator::exportSlices(std::vector<std::vector<QPolygon>> &slices) {
             if (retracted) {
                 // o << "G1 F2700 E" << std::to_string(extrusion) << "\n";
                 extrusion += recover;
-                out << "G1 F2700 E" << extrusion << "\n";
+                out << "G1 F" << retractSpeed << " E" << extrusion << "\n";
                 retracted = false;
             }
             QPoint end = printPath(slice[i], extrusion, z);
@@ -76,7 +97,8 @@ void GCodeGenerator::exportSlices(std::vector<std::vector<QPolygon>> &slices) {
             if (distance(nextp, end) > 1.3) {
                 // No retraction if very close
                 extrusion -= retraction;
-                out << "G1 F2700 E" << std::to_string(extrusion) << "\n";
+                out << "G1 F" << retractSpeed << " E"
+                    << std::to_string(extrusion) << "\n";
                 retracted = true;
             }
         }
@@ -110,7 +132,8 @@ void GCodeGenerator::startcode() {
     out << "G92 E0 ;Reset Extruder\n";
     out << "G90 ; absolute positioning\n";
     out << "M82 ; extruder to absolute mode\n";
-    out << "G1 F2700 E-" << std::to_string(retraction) << "\n";
+    out << "G1 F" << retractSpeed << " E-" << std::to_string(retraction)
+        << "\n";
     // out << "G1 Z2.0 F3000 ;Move Z Axis up\n";
     // out << "G1 F2700 E-" << std::to_string(retraction) << "\n";
 }
@@ -158,8 +181,8 @@ double GCodeGenerator::printLine(QPoint &from, QPoint &to, double &extrusion,
                 << std::to_string(to.y() / 1000.0f) << "\n";
         } else { // extrude only beginning of line
                  // Test: just go to almost the beginning
-            extrusion += ((length - 0.8) * area * extrusion_scale);
-            const double coastscale = length / (length - 1.4);
+            extrusion += ((length - coastingDistance) * area * extrusion_scale);
+            const double coastscale = length / (length - coastingDistance);
             double coastX;
             double coastY;
             coastX = ((to.x() - from.x()) / 1000.0f) / coastscale;
@@ -220,7 +243,7 @@ QPoint GCodeGenerator::printPath(QPolygon &poly, double &extrusion, double z) {
     for (int i = 1; i < poly.size(); i++) {
         auto pt = poly[i];
         auto angle = getAngle(p, prevp, pt);
-        if (length <= 0.4 && offset) {
+        if (length <= coastingDistance && offset) {
             double l = printLine(p, pt, extrusion, true);
             length -= l;
         } else {

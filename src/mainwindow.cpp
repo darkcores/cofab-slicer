@@ -71,6 +71,7 @@ void MainWindow::loadFile(QUrl file) {
     if (model)
         delete model;
     model = new Model3D(file.path().toStdString());
+	model->setLayerHeight(slicerOptions->layerHeight());
     auto slices = model->getSlices();
     auto bounds = model->getBounds();
     // gcodeViewer->setSlice(slice);
@@ -104,6 +105,12 @@ void MainWindow::exportGcode() {
     g.setExtrusionMultiplier(slicerOptions->extrusionMult());
 	g.setWallSpeed(slicerOptions->wallSpeed());
 	g.setInfillSpeed(slicerOptions->infillSpeed());
+	g.setCoasting(slicerOptions->coasting());
+	g.setRetractSpeed(slicerOptions->retractSpeed());
+	g.setRetractDistance(slicerOptions->retractDistance());
+	g.setRetractRestore(slicerOptions->retractRestore());
+	g.setLayerHeight(slicerOptions->layerHeight());
+	g.setNozzleWidth(slicerOptions->nozzleWidth());
     // g.generateGcode(clipped, "test.gcode");
     g.exportSlices(clipped);
 }

@@ -26,18 +26,27 @@ class GCodeGenerator {
 	void setExtrusionMultiplier(double scale);
 	void setWallSpeed(int speed);
 	void setInfillSpeed(int speed);
+	void setCoasting(double distance);
+	void setRetractSpeed(int speed);
+	void setRetractDistance(double distance);
+	void setRetractRestore(double distance);
+	void setNozzleWidth(double width);
 
 	void exportSlices(std::vector<std::vector<QPolygon>> &slices);
 
   private:
+	int retractSpeed = 2700;
+	double nozzleWidth = 0.4;
+	double coastingDistance = 0;
 	int wallSpeed = 2000;
 	int infillSpeed = 4000;
     double extrusion_scale = 1.00;
+	// Based on: https://manual.slic3r.org/advanced/flow-math
     double areaLine = ((0.2 * (0.42 - 0.2)) + (M_PI * pow(0.2 / 2, 2))) /
                             (M_PI * pow(1.75 / 2, 2));
     double areaInfill = areaLine * 1.5;
 	double area = areaLine;
-    double retraction = 4;
+	double retraction = 4;
     double recover = 3.999;
 	double layerHeight = 0.2;
 	int nozzleTemp = 200, bedTemp = 50;

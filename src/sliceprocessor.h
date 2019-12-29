@@ -27,14 +27,19 @@ class SliceProcessor {
 	void setWalls(unsigned int w) { num_walls = w; }
 	void setRoofsFloors(unsigned int rf) { num_rf = rf; }
 	void setInfillSpacing(int spacing) { infill_offset = spacing; }
+	void setNozzleWidth(double w);
+	void setLayerHeight(double h);
 
   private:
+	double nozzleWidth = 0.4;
+	double layerHeight = 0.2;
     const QRect bounds;
     unsigned int num_walls = 2; // Min 1
     unsigned int num_rf = 2;    // Num roofs / floors
     int infill_offset = 15;
-	const int wall_width = 0.3771 * 1000; // extrusion width - layerheight * (1-pi/4)
-    const long nozzle_offset = -wall_width;
+	// Based on: https://manual.slic3r.org/advanced/flow-math
+	int wall_width = 0.3771 * 1000; // extrusion width - layerheight * (1-pi/4)
+    long nozzle_offset = -wall_width;
     std::vector<ClipperLib::Paths> clipped_slices;
 
     void addSupport(std::vector<std::vector<QPolygon>> &processed);

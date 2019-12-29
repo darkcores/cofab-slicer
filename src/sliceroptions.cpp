@@ -23,9 +23,33 @@ QWidget *SlicerOptions::slicerSettings() {
     auto w = new QWidget(this);
     auto layout = new QFormLayout(w);
 
-    layout->addRow(tr("Retraction"), new QCheckBox(this));
-    layout->addRow(tr("Retraction speed"), new QLineEdit(this));
-    layout->addRow(tr("Retraction distance"), new QLineEdit(this));
+	retractSpeedBox = new QSpinBox();
+	retractSpeedBox->setValue(50);
+    layout->addRow(tr("Retraction speed (mm/s)"), retractSpeedBox);
+	retractDistanceBox = new QDoubleSpinBox();
+	retractDistanceBox->setRange(0.0f, 20.0f);
+	retractDistanceBox->setValue(4.0f);
+    layout->addRow(tr("Retraction distance (mm)"), retractDistanceBox);
+	retractRestoreBox = new QDoubleSpinBox();
+	retractRestoreBox->setRange(0.0f, 20.0f);
+	retractRestoreBox->setValue(3.99f);
+    layout->addRow(tr("Retraction restore (mm)"), retractRestoreBox);
+
+	coastingBox = new QDoubleSpinBox();
+	coastingBox->setRange(0.0f, 10.0f);
+	coastingBox->setValue(0.0f);
+	coastingBox->setSingleStep(0.01f);
+	layout->addRow(tr("Coasting distance (mm)"), coastingBox);
+
+	nozzleWidthBox = new QDoubleSpinBox();
+	nozzleWidthBox->setRange(0.1, 1.0);
+	nozzleWidthBox->setValue(0.4);
+	layout->addRow(tr("Nozzle width (mm)"), nozzleWidthBox);
+
+	layerHeightBox = new QDoubleSpinBox();
+	layerHeightBox->setRange(0.04, 1.0);
+	layerHeightBox->setValue(0.2);
+	layout->addRow(tr("Layer height (mm)"), layerHeightBox);
 
 	extrusionMultBox = new QDoubleSpinBox();
 	extrusionMultBox->setRange(0.25f, 2.5f);
