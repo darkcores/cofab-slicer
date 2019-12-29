@@ -62,7 +62,8 @@ void MainWindow::setupDocks() {
 void MainWindow::openFile() {
     QUrl file = QFileDialog::getOpenFileUrl(this, tr("Open 3D model"), QUrl(),
                                             tr("3D model (*.stl)"));
-    loadFile(file);
+    if (!file.isEmpty())
+        loadFile(file);
 }
 
 void MainWindow::loadFile(QUrl file) {
@@ -74,15 +75,15 @@ void MainWindow::loadFile(QUrl file) {
     auto bounds = model->getBounds();
     // gcodeViewer->setSlice(slice);
     SliceProcessor sp(bounds);
-	sp.setWalls(slicerOptions->walls());
-	sp.setRoofsFloors(slicerOptions->floorroof());
-	sp.setInfillSpacing(slicerOptions->infill());
+    sp.setWalls(slicerOptions->walls());
+    sp.setRoofsFloors(slicerOptions->floorroof());
+    sp.setInfillSpacing(slicerOptions->infill());
     clipped = sp.process(slices);
     gcodeViewer->setSlices(clipped);
 
     // move to center of the bed
-    QPoint offset((110 * 1000) - (bounds.width() / 2),
-                  (110 * 1000) - (bounds.height() / 2));
+    QPoint offset((slicerOptions->bedX() * 0.5 * 1000) - (bounds.width() / 2),
+                  (slicerOptions->bedY() * 0.5 * 1000) - (bounds.height() / 2));
     for (auto &layer : clipped) {
         for (auto &path : layer) {
             for (auto &point : path) {
@@ -95,7 +96,14 @@ void MainWindow::loadFile(QUrl file) {
 void MainWindow::exportGcode() {
     auto fileName = QFileDialog::getSaveFileName(
         this, tr("Save GCODE"), "out.gcode", tr("GCODE (*.gcode)"));
+    if (fileName.isEmpty())
+        return;
     GCodeGenerator g(fileName.toStdString());
+    g.setNozzleTemperature(slicerOptions->nozzleTemp());
+    g.setBedTemperature(slicerOptions->bedTemp());
+    g.setExtrusionMultiplier(slicerOptions->extrusionMult());
+	g.setWallSpeed(slicerOptions->wallSpeed());
+	g.setInfillSpeed(slicerOptions->infillSpeed());
     // g.generateGcode(clipped, "test.gcode");
     g.exportSlices(clipped);
 }

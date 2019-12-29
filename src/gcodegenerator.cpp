@@ -13,8 +13,20 @@ void GCodeGenerator::setLayerHeight(const double height) {
     layerHeight = height;
     areaLine = ((height * (0.42 - height)) + (M_PI * pow(height / 2, 2))) /
                (M_PI * pow(1.75 / 2, 2));
-	areaInfill = areaLine * 1.5;
+    areaInfill = areaLine * 1.5;
 }
+
+void GCodeGenerator::setNozzleTemperature(int temp) { nozzleTemp = temp; }
+
+void GCodeGenerator::setBedTemperature(int temp) { bedTemp = temp; }
+
+void GCodeGenerator::setExtrusionMultiplier(double scale) {
+    extrusion_scale = scale;
+}
+
+void GCodeGenerator::setWallSpeed(int speed) { wallSpeed = speed; }
+
+void GCodeGenerator::setInfillSpeed(int speed) { infillSpeed = speed; }
 
 void GCodeGenerator::exportSlices(std::vector<std::vector<QPolygon>> &slices) {
     /*
@@ -75,8 +87,8 @@ void GCodeGenerator::exportSlices(std::vector<std::vector<QPolygon>> &slices) {
 }
 
 void GCodeGenerator::startcode() {
-    out << "M190 S55\n";
-    out << "M109 S203\n";
+    out << "M190 S" << bedTemp << "\n";
+    out << "M109 S" << nozzleTemp << "\n";
     out << "M106 S0\n";
     out << "G21 ;metricvalues\n";
     out << "M201 X500.00 Y500.00 Z100.00 E5000.00 ;Setup machine max "
@@ -108,8 +120,8 @@ void GCodeGenerator::endcode() {
     // << "G1 E-5 F600 retract filament \n"
     out << "M140 S0 ; turn off bed heating \n"
         << "M104 S0 ; turn off nozzle heating \n"
-        << "G0 X5 F800 ; home x-axis \n"
-        << "G0 Y220 F800; bring bed to the front \n "
+        << "G0 X5 F1800 ; home x-axis \n"
+        << "G0 Y220 F1800; bring bed to the front \n "
         << "M106 S0; stop fan\n"
         << "M84; stop stepper motors";
 }
@@ -136,14 +148,14 @@ double GCodeGenerator::polyLength(const QPolygon &poly) {
 }
 
 double GCodeGenerator::printLine(QPoint &from, QPoint &to, double &extrusion,
-								  bool coast, double offset) {
+                                 bool coast, double offset) {
     // extrusion += (4 * 0.2 * 0.95 * length) / (M_PI * 0.4);
     double length = distance(from, to);
     if (coast) {
         if (length <= 0.4) { // Don't extrude on last part
                              // Test: just do nothing
             out << "X" << std::to_string(to.x() / 1000.0f) << " Y"
-              << std::to_string(to.y() / 1000.0f) << "\n";
+                << std::to_string(to.y() / 1000.0f) << "\n";
         } else { // extrude only beginning of line
                  // Test: just go to almost the beginning
             extrusion += ((length - 0.8) * area * extrusion_scale);
@@ -154,10 +166,10 @@ double GCodeGenerator::printLine(QPoint &from, QPoint &to, double &extrusion,
             coastY = ((to.y() - from.y()) / 1000.0f) / coastscale;
             // o << "; Coasting\n";
             out << "X" << std::to_string((from.x() / 1000.0f) + coastX) << " Y"
-              << std::to_string((from.y() / 1000.0f) + coastY) << " E"
-              << std::to_string(extrusion) << "\n";
+                << std::to_string((from.y() / 1000.0f) + coastY) << " E"
+                << std::to_string(extrusion) << "\n";
             out << "G1 X" << std::to_string(to.x() / 1000.0f) << " Y"
-              << std::to_string(to.y() / 1000.0f) << "\n";
+                << std::to_string(to.y() / 1000.0f) << "\n";
             /*
 o << "G1 X" << std::to_string(to.x() / 100.0f) << " Y"
   << std::to_string(to.y() / 100.0f) << "\n";
@@ -179,8 +191,8 @@ else
         }
         extrusion += (length * area * extrusion_scale);
         out << "X" << std::to_string(to.x() / 1000.0f) << " Y"
-          << std::to_string(to.y() / 1000.0f) << " E"
-          << std::to_string(extrusion) << "\n";
+            << std::to_string(to.y() / 1000.0f) << " E"
+            << std::to_string(extrusion) << "\n";
     }
     return length;
 }
@@ -189,13 +201,14 @@ QPoint GCodeGenerator::printPath(QPolygon &poly, double &extrusion, double z) {
     QPoint p = poly[0], prevp(0, 0);
     double length = polyLength(poly);
     if (z < 0.4) {
-        out << "G1 F1300 ";
+        out << "G1 F" << wallSpeed * 0.75 << " ";
     } else {
         if (poly.size() > 2)
-            out << "G1 F1800 ";
+            out << "G1 F" << wallSpeed << " ";
         else
-            out << "G1 F2400 "; // Infill can be faster
-                              // TODO split infill & floors/roofs
+            out << "G1 F" << infillSpeed
+                << " "; // Infill can be faster
+                        // TODO split infill & floors/roofs
     }
     bool offset = poly.size() > 2;
     if (offset) {

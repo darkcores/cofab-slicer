@@ -73,3 +73,8 @@ Thumbs.db
 
 bin/
 generated_files/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+slicer_autogen/

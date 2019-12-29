@@ -21,11 +21,18 @@ class GCodeGenerator {
     GCodeGenerator(const std::string filename);
 	~GCodeGenerator();
     void setLayerHeight(const double height);
+	void setNozzleTemperature(int temp);
+	void setBedTemperature(int temp);
+	void setExtrusionMultiplier(double scale);
+	void setWallSpeed(int speed);
+	void setInfillSpeed(int speed);
 
 	void exportSlices(std::vector<std::vector<QPolygon>> &slices);
 
   private:
-    double extrusion_scale = 1.05;
+	int wallSpeed = 2000;
+	int infillSpeed = 4000;
+    double extrusion_scale = 1.00;
     double areaLine = ((0.2 * (0.42 - 0.2)) + (M_PI * pow(0.2 / 2, 2))) /
                             (M_PI * pow(1.75 / 2, 2));
     double areaInfill = areaLine * 1.5;
@@ -33,6 +40,7 @@ class GCodeGenerator {
     double retraction = 4;
     double recover = 3.999;
 	double layerHeight = 0.2;
+	int nozzleTemp = 200, bedTemp = 50;
 
     std::ofstream out;
 
