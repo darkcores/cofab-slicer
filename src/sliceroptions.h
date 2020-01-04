@@ -4,8 +4,8 @@
 #include <QDockWidget>
 #include <QDoubleSpinBox>
 #include <QSpinBox>
+#include <QCheckBox>
 
-class QCheckBox;
 class QLineEdit;
 
 class SlicerOptions : public QDockWidget {
@@ -29,12 +29,14 @@ class SlicerOptions : public QDockWidget {
 	double retractRestore() { return retractRestoreBox->value(); }
 	double layerHeight() { return layerHeightBox->value(); }
 	double nozzleWidth() { return nozzleWidthBox->value(); }
+	bool support() { return supportBox->isChecked(); }
 
   private:
     QWidget *objectSettings();
     QWidget *slicerSettings();
     QWidget *printerSettings();
 
+	QCheckBox *supportBox;
     QSpinBox *infillBox, *wallsBox, *floorroofBox;
     QDoubleSpinBox *extrusionMultBox, *coastingBox;
     QSpinBox *nozzleTempBox, *bedTempBox, *bedXBox, *bedYBox;

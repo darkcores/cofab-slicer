@@ -91,6 +91,9 @@ QWidget *SlicerOptions::printerSettings() {
     auto w = new QWidget(this);
     auto layout = new QFormLayout(w);
 
+	supportBox = new QCheckBox();
+	layout->addRow("Support structures", supportBox);
+
 	nozzleTempBox = new QSpinBox();
 	nozzleTempBox->setRange(185, 300);
 	nozzleTempBox->setValue(200);
@@ -114,9 +117,6 @@ QWidget *SlicerOptions::printerSettings() {
 	infillSpeedBox->setRange(10, 150);
 	infillSpeedBox->setValue(50);
     layout->addRow(tr("Infill print speed (mm/s)"), infillSpeedBox);
-    layout->addRow(tr("Z height"), new QLineEdit(this));
-    layout->addRow(tr("Nozzle width"), new QLineEdit(this));
-    layout->addRow(tr("Show printer bounds"), new QCheckBox(this));
 
 	return w;
 }

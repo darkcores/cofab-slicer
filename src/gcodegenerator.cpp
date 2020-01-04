@@ -14,7 +14,7 @@ void GCodeGenerator::setLayerHeight(const double height) {
     areaLine = ((height * ((nozzleWidth * 1.05) - height)) +
                 (M_PI * pow(height / 2, 2))) /
                (M_PI * pow(1.75 / 2, 2));
-    areaInfill = areaLine * 1.5;
+    areaInfill = areaLine * 1.2;
 }
 
 void GCodeGenerator::setNozzleWidth(double width) {
@@ -22,7 +22,7 @@ void GCodeGenerator::setNozzleWidth(double width) {
     areaLine = ((layerHeight * ((nozzleWidth * 1.05) - layerHeight)) +
                 (M_PI * pow(layerHeight / 2, 2))) /
                (M_PI * pow(1.75 / 2, 2));
-    areaInfill = areaLine * 1.5;
+    areaInfill = areaLine * 1.2;
 }
 
 void GCodeGenerator::setNozzleTemperature(int temp) { nozzleTemp = temp; }
@@ -74,9 +74,11 @@ void GCodeGenerator::exportSlices(std::vector<std::vector<QPolygon>> &slices) {
             out << "M106 S256\n";
         // Go to start quickly
         for (std::size_t i = 0; i < slice.size(); i++) {
+			if (slice[i].size() < 2)
+				continue;
             QPoint p = slice[i][0];
             QPoint nextp(0, 0);
-            if (i < (slice.size() - 1)) {
+            if ((i < (slice.size() - 1)) && (slice[i + 1].size() > 1)) {
                 nextp = slice[i + 1][0];
             } else if (s < (slices.size() - 1)) {
                 nextp = slices[s][0][0];

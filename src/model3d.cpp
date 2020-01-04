@@ -181,7 +181,11 @@ std::vector<QPolygon> Model3D::getSlice(const double currentLayer) const {
             poly << next;
             next = findNext(next);
         }
-        polygons.push_back(poly);
+		if (poly.size() > 2) {
+			polygons.push_back(poly);
+		} else {
+			std::cout << "Bad polygon generated (bad stl or bug)" << std::endl;
+		}
     }
 
     // std::cout << polygons.size() << " Polygons" << std::endl;

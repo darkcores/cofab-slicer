@@ -144,10 +144,12 @@ SliceProcessor::process(const std::vector<std::vector<QPolygon>> &paths) {
         processed[i] = slice;
     }
 
-    std::cout << "add support" << std::endl;
-    // addSupport
-    addSupport(processed);
-
+	if (support) {
+		std::cout << "add support" << std::endl;
+		// addSupport
+		addSupport(processed);
+	}
+	
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
@@ -358,6 +360,12 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
     if (idx > 0) {
         int good = 0, bad = 0, moved = 0;
         for (std::size_t i = 0; i < edges.size(); i++) {
+            if (edges[i].size() < 3) {
+                std::cout << "Non polygon in structure but continueing\n";
+                std::cout << "This is probably a bug if you see this"
+                          << std::endl;
+                continue;
+            }
             if (checkpt(edges[i][0])) {
                 good++;
                 continue;
@@ -366,16 +374,19 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
             }
             int pton = 0;
             for (std::size_t j = 1; j < edges[i].size(); j++) {
-                if (checkpt(edges[i][j]) && pton > 2) {
-                    ClipperLib::Path tmp(edges[i].begin(),
-                                         edges[i].begin() + j);
-                    std::move(edges[i].begin() + j, edges[i].end(),
-                              edges[i].begin());
-                    std::move(tmp.begin(), tmp.end(), edges[i].end() - j);
-                    moved++;
-                    break;
+                if (checkpt(edges[i][j])) {
+                    if (pton > 2) {
+                        ClipperLib::Path tmp(edges[i].begin(),
+                                             edges[i].begin() + j);
+                        std::move(edges[i].begin() + j, edges[i].end(),
+                                  edges[i].begin());
+                        std::move(tmp.begin(), tmp.end(), edges[i].end() - j);
+                        moved++;
+                        break;
+                    } else {
+                        pton++;
+                    }
                 }
-                pton++;
             }
         }
         if (bad > 0) {
@@ -391,9 +402,17 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
     long distance;
     ClipperLib::IntPoint lastPoint = edges[0][0];
     for (std::size_t i = 1; i < edges.size() - 1; i++) {
+		if (edges[i].size() < 3) {
+			// Bad if this happens
+			continue;
+		}
         distance = std::pow(lastPoint.X - edges[i][0].X, 2);
         distance += std::pow(lastPoint.Y - edges[i][0].Y, 2);
         for (std::size_t j = i + 1; j < edges.size(); j++) {
+			if (edges[j].size() < 3) {
+				// Bad if this happens
+				continue;
+			}
             long newdist = std::pow(lastPoint.X - edges[j][0].X, 2);
             newdist += std::pow(lastPoint.Y - edges[j][0].Y, 2);
             if (newdist < distance) {

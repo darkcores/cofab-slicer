@@ -29,8 +29,10 @@ class SliceProcessor {
 	void setInfillSpacing(int spacing) { infill_offset = spacing; }
 	void setNozzleWidth(double w);
 	void setLayerHeight(double h);
+	void setSupport(bool enabled) { support = enabled; };
 
   private:
+	bool support = false;
 	double nozzleWidth = 0.4;
 	double layerHeight = 0.2;
     const QRect bounds;
