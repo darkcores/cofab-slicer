@@ -9,14 +9,17 @@ SliceProcessor::SliceProcessor(const QRect bounds) : bounds(bounds) {}
 
 void SliceProcessor::setNozzleWidth(double w) {
     nozzleWidth = w;
-    wall_width = (nozzleWidth * 1.05) - (layerHeight * (1 - (M_PI / 4)));
+    wall_width = round(((nozzleWidth * 1.05) - (layerHeight * (1 - (M_PI / 4)))) * 1000);
     nozzle_offset = -wall_width;
+	std::cout << "Width: " << wall_width << std::endl;
+	std::cout << nozzleWidth << " - " << layerHeight << std::endl;
 }
 
 void SliceProcessor::setLayerHeight(double h) {
     layerHeight = h;
-    wall_width = (nozzleWidth * 1.05) - (layerHeight * (1 - (M_PI / 4)));
+    wall_width = round(((nozzleWidth * 1.05) - (layerHeight * (1 - (M_PI / 4)))) * 1000);
     nozzle_offset = -wall_width;
+	std::cout << "Width: " << wall_width << std::endl;
 }
 
 void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
@@ -386,7 +389,9 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
                     } else {
                         pton++;
                     }
-                }
+                } else {
+					pton = 0;
+				} 
             }
         }
         if (bad > 0) {

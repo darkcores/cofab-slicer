@@ -78,6 +78,8 @@ void MainWindow::loadFile(QUrl file) {
     SliceProcessor sp(bounds);
 	sp.setSupport(slicerOptions->support());
     sp.setWalls(slicerOptions->walls());
+	sp.setNozzleWidth(slicerOptions->nozzleWidth());
+	sp.setLayerHeight(slicerOptions->layerHeight());
     sp.setRoofsFloors(slicerOptions->floorroof());
     sp.setInfillSpacing(slicerOptions->infill());
     clipped = sp.process(slices);

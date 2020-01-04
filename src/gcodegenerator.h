@@ -40,11 +40,11 @@ class GCodeGenerator {
 	double coastingDistance = 0;
 	int wallSpeed = 2000;
 	int infillSpeed = 4000;
-    double extrusion_scale = 1.00;
+    double extrusion_scale = 1.20;
 	// Based on: https://manual.slic3r.org/advanced/flow-math
     double areaLine = ((0.2 * (0.42 - 0.2)) + (M_PI * pow(0.2 / 2, 2))) /
                             (M_PI * pow(1.75 / 2, 2));
-    double areaInfill = areaLine * 1.5;
+    double areaInfill = areaLine * 1.0;
 	double area = areaLine;
 	double retraction = 4;
     double recover = 3.999;

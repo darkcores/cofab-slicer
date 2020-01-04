@@ -53,7 +53,7 @@ QWidget *SlicerOptions::slicerSettings() {
 
 	extrusionMultBox = new QDoubleSpinBox();
 	extrusionMultBox->setRange(0.25f, 2.5f);
-	extrusionMultBox->setValue(1.0f);
+	extrusionMultBox->setValue(1.25f);
 	extrusionMultBox->setSingleStep(0.05);
 	layout->addRow(tr("Extrusion multiplier"), extrusionMultBox);
 
