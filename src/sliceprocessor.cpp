@@ -127,12 +127,14 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
                               ClipperLib::PolyFillType::pftNonZero,
                               ClipperLib::PolyFillType::pftNonZero);
             //check if last or first layer
-            if(i+1< original_slices.size() && i > 0){
+            if(i+1< original_slices.size()){
               threeunionclip.AddPaths(original_slices[i], ClipperLib::PolyType::ptSubject, true);
               threeunionclip.AddPaths(original_slices[i+1], ClipperLib::PolyType::ptClip,
                                  true);
-              threeunionclip.AddPaths(original_slices[i-1], ClipperLib::PolyType::ptClip,
+              if(i > 0){
+                threeunionclip.AddPaths(original_slices[i-1], ClipperLib::PolyType::ptClip,
                                  true);
+              }
               threeunionclip.Execute(ClipperLib::ClipType::ctUnion, output);
 
 
