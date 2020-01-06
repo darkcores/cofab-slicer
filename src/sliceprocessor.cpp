@@ -113,11 +113,12 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
         ClipperLib::Paths smaller = getOffsetEdges(diff, offset);
 
         //make sure it isn't the first layer after the structure that needs support
-
         if (diff.size() > 0 && smaller.size() > 0) {
             // add support structure (smaller)
             // union with current layer and the smaller section
             ClipperLib::Clipper unionclip;
+            ClipperLib::Clipper threeunionclip;
+            ClipperLib::Clipper differenceclip;
             ClipperLib::Paths output;
             unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
             unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip,
@@ -125,29 +126,28 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
             unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
                               ClipperLib::PolyFillType::pftNonZero,
                               ClipperLib::PolyFillType::pftNonZero);
-
             //check if last or first layer
             if(i+1< original_slices.size() && i > 0){
-              std::cout << i << std::endl;
-              unionclip.AddPaths(original_slices[i], ClipperLib::PolyType::ptSubject, true);
-              unionclip.AddPaths(original_slices[i+1], ClipperLib::PolyType::ptClip,
+              threeunionclip.AddPaths(original_slices[i], ClipperLib::PolyType::ptSubject, true);
+              threeunionclip.AddPaths(original_slices[i+1], ClipperLib::PolyType::ptClip,
                                  true);
-              unionclip.AddPaths(original_slices[i-1], ClipperLib::PolyType::ptClip,
+              threeunionclip.AddPaths(original_slices[i-1], ClipperLib::PolyType::ptClip,
                                  true);
-              unionclip.Execute(ClipperLib::ClipType::ctUnion, output,
-                                ClipperLib::PolyFillType::pftNonZero,
-                                ClipperLib::PolyFillType::pftNonZero);
-              std::cout << "test" << std::endl;
+              threeunionclip.Execute(ClipperLib::ClipType::ctUnion, output);
+
+
+              //convert to qpolygon
+              differenceclip.AddPaths(smaller,
+                                        ClipperLib::PolyType::ptSubject, true);
+              differenceclip.AddPaths(output, ClipperLib::ptClip, true);
+              differenceclip.Execute(ClipperLib::ClipType::ctDifference, smaller);
             }
 
-            //convert to qpolygon
-            differenceLayers.AddPaths(output,
-                                      ClipperLib::PolyType::ptSubject, true);
-            differenceLayers.AddPaths(smaller, ClipperLib::ptClip, true);
-            differenceLayers.Execute(ClipperLib::ClipType::ctDifference, smaller);
+            //------------
 
             auto grid = getInfillSupport(smaller);
             optimizeInfill(grid);
+
             //std::cout<<grid<<std::endl;
             grid.insert(grid.end(), smaller.begin(), smaller.end());
             std::vector<QPolygon> p;
