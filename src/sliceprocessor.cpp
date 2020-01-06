@@ -112,8 +112,8 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
         ClipperLib::CleanPolygons(diff);
         ClipperLib::Paths smaller = getOffsetEdges(diff, offset);
 
-        //make sure it isn't the first layer after the structure that needs support
         if (diff.size() > 0 && smaller.size() > 0) {
+            smaller = getOffsetEdges(diff, offset * 1.5);
             // add support structure (smaller)
             // union with current layer and the smaller section
             ClipperLib::Clipper unionclip;
@@ -151,10 +151,10 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
             optimizeInfill(grid);
 
             //std::cout<<grid<<std::endl;
-            grid.insert(grid.end(), smaller.begin(), smaller.end());
+            smaller.insert(smaller.end(), grid.begin(), grid.end());
             std::vector<QPolygon> p;
-            p.reserve(grid.size());
-            for (auto &path : grid) {
+            p.reserve(smaller.size());
+            for (auto &path : smaller) {
                 QPolygon poly;
                 poly.reserve(path.size());
                 for (auto &point : path) {
