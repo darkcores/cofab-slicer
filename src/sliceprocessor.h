@@ -63,6 +63,8 @@ class SliceProcessor {
      * Get infill for region.
      */
     ClipperLib::Paths getInfill(const ClipperLib::Paths &edges) const;
+    ClipperLib::Paths getInfillSupport(const ClipperLib::Paths &edges) const;
+
     ClipperLib::Paths getDenseInfill(const ClipperLib::Paths &edges,
                                      const bool direction) const;
 

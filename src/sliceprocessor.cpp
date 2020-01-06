@@ -22,13 +22,61 @@ void SliceProcessor::setLayerHeight(double h) {
 	std::cout << "Width: " << wall_width << std::endl;
 }
 
+ClipperLib::Paths
+SliceProcessor::getInfillSupport(const ClipperLib::Paths &edges) const {
+    ClipperLib::Paths contour;
+    ClipperLib::ClipperOffset co;
+    int offset = nozzle_offset / 2;
+    co.AddPaths(edges, ClipperLib::JoinType::jtRound,
+                ClipperLib::EndType::etClosedPolygon);
+    co.Execute(contour, offset); // 1/2 nozzle * INT_SCALE
+
+    ClipperLib::Paths lines;
+
+    ClipperLib::PolyTree contour_tree;
+    ClipperLib::Clipper clip;
+    clip.AddPaths(contour, ClipperLib::PolyType::ptClip, true);
+    clip.Execute(ClipperLib::ClipType::ctXor, contour_tree);
+
+    long x = bounds.left(), y = bounds.top();
+    const long xfrom = bounds.left(), yfrom = bounds.top();
+    const long xto = bounds.right(), yto = bounds.bottom();
+
+    const long incr = std::sqrt(pow(2 * wall_width, 2) / 2) * infill_offset/3;
+    lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
+    // std::cout << "incr: " << incr << std::endl;
+    ClipperLib::Path line(2);
+    while (x < xto || y < yto) {
+        line.clear();
+        line << ClipperLib::IntPoint(xfrom, y);
+        line << ClipperLib::IntPoint(xto, y);
+        lines.push_back(line);
+        line.clear();
+        line << ClipperLib::IntPoint(x, yto);
+        line << ClipperLib::IntPoint(x, yfrom);
+        lines.push_back(line);
+        x += incr;
+        y += incr;
+        // std::cout << x << " - " << y << std::endl;
+    }
+
+    ClipperLib::PolyTree lines_tree;
+    clip.Clear();
+    clip.AddPaths(lines, ClipperLib::PolyType::ptSubject, false);
+    clip.AddPaths(contour, ClipperLib::PolyType::ptClip, true);
+    clip.Execute(ClipperLib::ClipType::ctIntersection, lines_tree);
+
+    ClipperLib::OpenPathsFromPolyTree(lines_tree, lines);
+    return lines;
+}
+
+
 void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
     // get slice difference with the last one
     // start from top of the model to bottom
     if (clipped_slices.size() < 2) {
         return;
     }
-
     auto j = clipped_slices.size() - 1;
 
     for (auto i = clipped_slices.size() - 2; i-- > 0;) {
@@ -42,34 +90,41 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
                                   ClipperLib::PolyType::ptSubject, true);
         differenceLayers.AddPaths(clipped_slices[i], ClipperLib::ptClip, true);
         differenceLayers.Execute(ClipperLib::ClipType::ctDifference, diff);
-
-        // std::cout << "diff: " << diff << std::endl;
         // offset the edges: because the vertices of a triangle with 90°,45°,
         // 45° angles are the same length
         ClipperLib::CleanPolygons(diff);
         ClipperLib::Paths smaller = getOffsetEdges(diff, offset);
 
+
         if (diff.size() > 0 && smaller.size() > 0) {
-            std::cout << "adding support at layer " << i << std::endl;
+            std::cout << "adding support" << std::endl;
+            auto grid = getInfillSupport(smaller);
+            optimizeInfill(grid);
+            std::cout<<grid<<std::endl;
+            grid.insert(grid.end(), smaller.begin(), smaller.end());
+
             // add support structure (smaller)
             // union with current layer and the smaller section
             ClipperLib::Clipper unionclip;
-            ClipperLib::Paths sol;
-            unionclip.AddPaths(smaller, ClipperLib::PolyType::ptSubject, true);
-            unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip,
-                               true);
-            unionclip.Execute(ClipperLib::ClipType::ctUnion, sol,
-                              ClipperLib::PolyFillType::pftNonZero,
-                              ClipperLib::PolyFillType::pftNonZero);
-
             unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
             unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip,
                                true);
             unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
                               ClipperLib::PolyFillType::pftNonZero,
                               ClipperLib::PolyFillType::pftNonZero);
-            processed[i] = processSlice(sol, j);
-            // update last layer
+            //convert to qpolygon
+            std::vector<QPolygon> p;
+            p.reserve(grid.size());
+            for (auto &path : grid) {
+                QPolygon poly;
+                poly.reserve(path.size());
+                for (auto &point : path) {
+                    poly << QPoint(point.X, point.Y);
+                }
+                p.push_back(poly);
+            }
+            //update the layer
+            processed[i].insert(processed[i].end(), p.begin(), p.end());
         }
         j--;
     }
@@ -152,7 +207,7 @@ SliceProcessor::process(const std::vector<std::vector<QPolygon>> &paths) {
 		// addSupport
 		addSupport(processed);
 	}
-	
+
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
@@ -391,7 +446,7 @@ void SliceProcessor::optimizeEdges(ClipperLib::Paths &edges,
                     }
                 } else {
 					pton = 0;
-				} 
+				}
             }
         }
         if (bad > 0) {
