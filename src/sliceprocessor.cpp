@@ -70,6 +70,21 @@ SliceProcessor::getInfillSupport(const ClipperLib::Paths &edges) const {
     return lines;
 }
 
+bool SliceProcessor::firstLayerOffSupport(const ClipperLib::Paths &i, const ClipperLib::Paths &j, const int offset ) const{
+  ClipperLib::Clipper differenceLayers;
+  ClipperLib::Paths original;
+  differenceLayers.AddPaths(j, ClipperLib::PolyType::ptSubject, true);
+  differenceLayers.AddPaths(i, ClipperLib::ptClip, true);
+  differenceLayers.Execute(ClipperLib::ClipType::ctDifference, original);
+
+  ClipperLib::CleanPolygons(original);
+  ClipperLib::Paths smaller = getOffsetEdges(original, offset);
+
+  if(smaller.size()>0){
+    return true;
+  }
+  return false;
+}
 
 void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
     // get slice difference with the last one
@@ -77,12 +92,14 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
     if (clipped_slices.size() < 2) {
         return;
     }
-    auto j = clipped_slices.size() - 1;
+    std::vector<ClipperLib::Paths> original_slices(clipped_slices);
 
+
+    auto j = clipped_slices.size() - 1;
     for (auto i = clipped_slices.size() - 2; i-- > 0;) {
         // std::cout << "layer " << i << ": "<< clipped_slices.at(i) <<
         // std::endl; difference between layers
-        int offset = -layerHeight * 1000;
+        int offset = -nozzleWidth * 1000;
         ClipperLib::Clipper differenceLayers;
         ClipperLib::Paths diff;
 
@@ -95,24 +112,44 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
         ClipperLib::CleanPolygons(diff);
         ClipperLib::Paths smaller = getOffsetEdges(diff, offset);
 
+        //make sure it isn't the first layer after the structure that needs support
 
         if (diff.size() > 0 && smaller.size() > 0) {
-            std::cout << "adding support" << std::endl;
-            auto grid = getInfillSupport(smaller);
-            optimizeInfill(grid);
-            std::cout<<grid<<std::endl;
-            grid.insert(grid.end(), smaller.begin(), smaller.end());
-
             // add support structure (smaller)
             // union with current layer and the smaller section
             ClipperLib::Clipper unionclip;
+            ClipperLib::Paths output;
             unionclip.AddPaths(diff, ClipperLib::PolyType::ptSubject, true);
             unionclip.AddPaths(clipped_slices[i], ClipperLib::PolyType::ptClip,
                                true);
             unionclip.Execute(ClipperLib::ClipType::ctUnion, clipped_slices[i],
                               ClipperLib::PolyFillType::pftNonZero,
                               ClipperLib::PolyFillType::pftNonZero);
+
+            //check if last or first layer
+            if(i+1< original_slices.size() && i > 0){
+              std::cout << i << std::endl;
+              unionclip.AddPaths(original_slices[i], ClipperLib::PolyType::ptSubject, true);
+              unionclip.AddPaths(original_slices[i+1], ClipperLib::PolyType::ptClip,
+                                 true);
+              unionclip.AddPaths(original_slices[i-1], ClipperLib::PolyType::ptClip,
+                                 true);
+              unionclip.Execute(ClipperLib::ClipType::ctUnion, output,
+                                ClipperLib::PolyFillType::pftNonZero,
+                                ClipperLib::PolyFillType::pftNonZero);
+              std::cout << "test" << std::endl;
+            }
+
             //convert to qpolygon
+            differenceLayers.AddPaths(output,
+                                      ClipperLib::PolyType::ptSubject, true);
+            differenceLayers.AddPaths(smaller, ClipperLib::ptClip, true);
+            differenceLayers.Execute(ClipperLib::ClipType::ctDifference, smaller);
+
+            auto grid = getInfillSupport(smaller);
+            optimizeInfill(grid);
+            //std::cout<<grid<<std::endl;
+            grid.insert(grid.end(), smaller.begin(), smaller.end());
             std::vector<QPolygon> p;
             p.reserve(grid.size());
             for (auto &path : grid) {
@@ -125,6 +162,7 @@ void SliceProcessor::addSupport(std::vector<std::vector<QPolygon>> &processed) {
             }
             //update the layer
             processed[i].insert(processed[i].end(), p.begin(), p.end());
+
         }
         j--;
     }

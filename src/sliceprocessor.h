@@ -44,6 +44,7 @@ class SliceProcessor {
     long nozzle_offset = -wall_width;
     std::vector<ClipperLib::Paths> clipped_slices;
 
+    bool firstLayerOffSupport(const ClipperLib::Paths &i, const ClipperLib::Paths &j, const int offset) const;
     void addSupport(std::vector<std::vector<QPolygon>> &processed);
     ClipperLib::Paths getGrid(const int gridSpace, const ClipperLib::Paths diff);
 
