@@ -42,7 +42,7 @@ SliceProcessor::getInfillSupport(const ClipperLib::Paths &edges) const {
     const long xfrom = bounds.left(), yfrom = bounds.top();
     const long xto = bounds.right(), yto = bounds.bottom();
 
-    const long incr = std::sqrt(pow(2 * wall_width, 2) / 2) * infill_offset/3;
+    const long incr = std::sqrt(pow(2 * wall_width, 2) / 2) * infill_offset;
     lines.reserve(((xto - xfrom) / incr) + ((yto - yfrom) / incr));
     // std::cout << "incr: " << incr << std::endl;
     ClipperLib::Path line(2);
