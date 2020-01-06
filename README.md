@@ -8,11 +8,11 @@ This project uses `Qt>=5.10`, `assimp` and `clipper`.
 
 ## Building
 
-This project uses the qmake build system. One way to build this
+This project uses the qmake or cmake build system. One way to build this
 project is shown below.
 
 ```
-qmake slicer.pro
+cmake CMakeLists.txt
 make -j4
 ```
 
