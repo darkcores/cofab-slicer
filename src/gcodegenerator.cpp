@@ -14,7 +14,7 @@ void GCodeGenerator::setLayerHeight(const double height) {
     areaLine = ((height * ((nozzleWidth * 1.05) - height)) +
                 (M_PI * pow(height / 2, 2))) /
                (M_PI * pow(1.75 / 2, 2));
-    areaInfill = areaLine * 1.05;
+    areaInfill = areaLine * 1.01;
 }
 
 void GCodeGenerator::setNozzleWidth(double width) {
@@ -22,7 +22,7 @@ void GCodeGenerator::setNozzleWidth(double width) {
     areaLine = ((layerHeight * ((nozzleWidth * 1.05) - layerHeight)) +
                 (M_PI * pow(layerHeight / 2, 2))) /
                (M_PI * pow(1.75 / 2, 2));
-    areaInfill = areaLine * 1.05;
+    areaInfill = areaLine * 1.01;
 }
 
 void GCodeGenerator::setNozzleTemperature(int temp) { nozzleTemp = temp; }

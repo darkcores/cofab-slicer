@@ -23,6 +23,8 @@ QWidget *SlicerOptions::slicerSettings() {
     auto w = new QWidget(this);
     auto layout = new QFormLayout(w);
 
+	supportBox = new QCheckBox();
+	layout->addRow("Support structures", supportBox);
 	retractSpeedBox = new QSpinBox();
 	retractSpeedBox->setValue(50);
     layout->addRow(tr("Retraction speed (mm/s)"), retractSpeedBox);
@@ -53,7 +55,7 @@ QWidget *SlicerOptions::slicerSettings() {
 
 	extrusionMultBox = new QDoubleSpinBox();
 	extrusionMultBox->setRange(0.25f, 2.5f);
-	extrusionMultBox->setValue(1.25f);
+	extrusionMultBox->setValue(1.10f);
 	extrusionMultBox->setSingleStep(0.05);
 	layout->addRow(tr("Extrusion multiplier"), extrusionMultBox);
 
@@ -91,15 +93,12 @@ QWidget *SlicerOptions::printerSettings() {
     auto w = new QWidget(this);
     auto layout = new QFormLayout(w);
 
-	supportBox = new QCheckBox();
-	layout->addRow("Support structures", supportBox);
-
 	nozzleTempBox = new QSpinBox();
 	nozzleTempBox->setRange(185, 300);
-	nozzleTempBox->setValue(200);
+	nozzleTempBox->setValue(205);
     layout->addRow(tr("Nozzle temperature"), nozzleTempBox);
 	bedTempBox = new QSpinBox();
-	bedTempBox->setValue(50);
+	bedTempBox->setValue(55);
     layout->addRow(tr("Bed temperature"), bedTempBox);
 	bedXBox = new QSpinBox();
 	bedXBox->setRange(100, 1000);
@@ -115,7 +114,7 @@ QWidget *SlicerOptions::printerSettings() {
     layout->addRow(tr("Wall print speed (mm/s)"), wallSpeedBox);
 	infillSpeedBox = new QSpinBox();
 	infillSpeedBox->setRange(10, 150);
-	infillSpeedBox->setValue(50);
+	infillSpeedBox->setValue(40);
     layout->addRow(tr("Infill print speed (mm/s)"), infillSpeedBox);
 
 	return w;

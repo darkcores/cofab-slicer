@@ -614,7 +614,7 @@ SliceProcessor::getDenseArea(const ClipperLib::Paths &infillArea,
     ClipperLib::ClipperOffset co;
     co.AddPaths(paths, ClipperLib::JoinType::jtRound,
                 ClipperLib::EndType::etClosedPolygon);
-    co.Execute(paths, -(nozzle_offset * num_walls)); // 1/2 nozzle * INT_SCALE
+    co.Execute(paths, -(nozzle_offset * num_walls));
 
     // return paths;
 
