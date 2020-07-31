@@ -1,15 +1,14 @@
 # COFAB Slicer
 
-STL slicer
+STL slicer we made for the Computional Fabrication course at UHasselt.
 
 ## Dependencies
 
-This project uses `Qt>=5.10`, `assimp` and `clipper`.
+This project requires `Qt>=5.10`, `assimp` and `clipper`.
 
 ## Building
 
-This project uses the qmake or cmake build system. One way to build this
-project is shown below.
+This project uses the qmake or cmake build system. To built with cmake:
 
 ```
 cmake CMakeLists.txt
